@@ -338,11 +338,11 @@ export default new class URQLClient extends Client {
       if (error.name === 'AbortError') return undefined
       if (jobInfo.retryCount > 8) return undefined
 
-      if (error.message === 'Failed to fetch') return this.setRateLimit(60000)
+      if (error.message === 'Failed to fetch') return this.setRateLimit(10_000)
       if (!(error instanceof FetchError)) return 0
       if (error.res.status === 500) return 1000
 
-      const delay = (parseInt(error.res.headers.get('retry-after') ?? '60') + 1) * 1000
+      const delay = (parseInt(error.res.headers.get('retry-after') ?? '10') + 1) * 1000
 
       debug('Setting rate limit for', error.res.status, delay)
 
