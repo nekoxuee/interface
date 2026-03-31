@@ -33,7 +33,7 @@
     <SkeletonCard />
   {/each}
 {:else if $query.error}
-  <div class='p-5 flex items-center justify-center w-full h-80'>
+  <div class='p-5 flex items-center justify-center w-full h-80 col-span-full'>
     <div>
       <div class='mb-1 font-bold text-4xl text-center '>
         Ooops!

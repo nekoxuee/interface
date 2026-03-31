@@ -9,6 +9,7 @@ import { toast } from 'svelte-sonner'
 
 import { anilistClientID } from '../settings'
 
+import { cacheOnErrorExchange } from './error'
 import gql from './gql'
 import { CommentFrag, UpdateUser, type Entry, FullMedia, FullMediaList, ThreadFrag, type ToggleFavourite, UserLists, Viewer } from './queries'
 import { refocusExchange } from './refocus'
@@ -119,6 +120,7 @@ export default new class URQLClient extends Client {
       fetch: (req: RequestInfo | URL, opts?: RequestInit) => this.handleRequest(req, opts),
       exchanges: [
         refocusExchange(60_000),
+        cacheOnErrorExchange(),
         offlineExchange({
           schema,
           storage,
