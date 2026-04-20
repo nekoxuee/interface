@@ -97,7 +97,7 @@
     loadeddata: undefined
     loadedmetadata: undefined
     timeupdate: undefined
-    fallback: { error: unknown }
+    fallback: Error
   }>()
 
   let lastSyncPaused = paused
@@ -400,10 +400,10 @@
     await clearIterators()
   }
 
-  function handleBackendError (error: unknown) {
+  function handleBackendError (error: Error) {
     console.error('MediaBunny playback failed, falling back to native video:', error)
     destroy()
-    dispatch('fallback', { error })
+    dispatch('fallback', error)
   }
 
   export async function load (skipDestroy = false) {
@@ -421,7 +421,7 @@
 
       await rebuildBackendPipeline(playbackTimeAtStart, true)
     } catch (error) {
-      handleBackendError(error)
+      handleBackendError(error as Error)
     }
   }
 
