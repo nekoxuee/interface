@@ -260,7 +260,7 @@ export const extensions = new class Extensions {
 
           async value => {
             const vals = navigator.onLine && shouldUpdatePeers && value.length
-              ? await raceTimeout(this.updatePeerCounts(value))
+              ? await raceTimeout(this.updatePeerCounts(value)) ?? value
               : value
 
             return { results: await parseResults(vals.map(v => ({ ...v, extension: new Set([id]), parseObject: {} as unknown as AnitomyResult }))) }
@@ -408,9 +408,9 @@ async function raceWithHandler<T, U = T, E = Error> (promise: Promise<T>, settle
   return await Promise.race([promise, timeout]).then(settled).catch(error)
 }
 
-function raceTimeout<T> (promise: Promise<T[]>, time = 3_000): Promise<T[]> {
-  const timeout = new Promise<T[]>((resolve, reject) => {
-    setTimeout(() => resolve([]), time)
+function raceTimeout<T> (promise: Promise<T>, time = 3_000): Promise<T | undefined> {
+  const timeout = new Promise<undefined>((resolve, reject) => {
+    setTimeout(() => resolve(undefined), time)
   })
 
   return Promise.race([promise, timeout])
