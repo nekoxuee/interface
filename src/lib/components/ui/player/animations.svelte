@@ -3,10 +3,10 @@
   import Pause from 'lucide-svelte/icons/pause'
   import Rewind from 'lucide-svelte/icons/rewind'
   import Volume1 from 'lucide-svelte/icons/volume-1'
-  import Volume2 from 'lucide-svelte/icons/volume-2'
   import { writable } from 'simple-store-svelte'
 
   import Play from '$lib/components/icons/Play.svelte'
+  import Volume2 from '$lib/components/icons/Volume2.svelte'
   import { settings } from '$lib/modules/settings'
 
   type AnimationType = 'play' | 'pause' | 'seekforw' | 'seekback' | 'volumeup' | 'volumedown' | (string & {})
