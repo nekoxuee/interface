@@ -48,7 +48,12 @@
                 {:else if options.type === 'select'}
                   <div class='space-y-2'>
                     <Label for={id} class='leading-[unset] grow font-bold'>{options.description}</Label>
-                    <Select.Root portal='#root' selected={$exopts[config.id].options[id]} onSelectedChange={({ value }) => { $exopts[config.id].options[id] = value }}>
+                    <Select.Root
+                      portal='#root'
+                      selected={$exopts[config.id].options[id] == null
+                        ? undefined
+                        : { value: $exopts[config.id].options[id], label: String($exopts[config.id].options[id]) }}
+                      onSelectedChange={({ value }) => { $exopts[config.id].options[id] = value }}>
                       <Select.Trigger {id}>
                         <Select.Value placeholder={options.default} />
                       </Select.Trigger>
