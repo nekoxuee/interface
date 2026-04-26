@@ -24,20 +24,13 @@
     "svelte",
     "html"
   ],
-  "javascript.preferences.importModuleSpecifierEnding": "minimal",
-  "javascript.preferences.quoteStyle": "single",
-  "javascript.suggest.autoImports": true,
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "javascript.validate.enable": true,
+  "js/ts.preferences.importModuleSpecifierEnding": "minimal",
+  "js/ts.preferences.quoteStyle": "single",
+  "js/ts.suggest.autoImports": true,
+  "js/ts.updateImportsOnFileMove.enabled": "always",
   "extensions.ignoreRecommendations": false,
   "svelte.plugin.svelte.format.config.singleQuote": true,
   "svelte.plugin.svelte.format.enable": false,
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.experimental.expandableHover": true,
-  "typescript.preferences.importModuleSpecifierEnding": "minimal",
-  "typescript.preferences.quoteStyle": "single",
-  "typescript.suggest.autoImports": true,
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "typescript.validate.enable": true
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }
