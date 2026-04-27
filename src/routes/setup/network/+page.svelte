@@ -90,14 +90,14 @@
   </SettingCard>
   {#if !SUPPORTS.isIOS}
     {#if !SUPPORTS.isAndroid}
-      <SettingCard let:id title='Use DNS Over HTTPS' description='Enables DNS Over HTTPS, useful if your ISP blocks certain domains.'>
+      <SettingCard class='bg-transparent' let:id title='Use DNS Over HTTPS' description='Enables DNS Over HTTPS, useful if your ISP blocks certain domains.'>
         <Switch {id} bind:checked={$settings.enableDoH} />
       </SettingCard>
       <SettingCard let:id title='DNS Over HTTPS URL' description='What URL to use for querying DNS Over HTTPS.'>
         <Input type='url' bind:value={$settings.doHURL} {id} class='w-80 shrink-0 bg-background' />
       </SettingCard>
     {:else}
-      <SettingCard title='Use DNS Over HTTPS' description="Enables DNS Over HTTPS, useful if your ISP blocks certain domains. On Android this is a system setting, which cannot be changed here. It's usually named 'Private DNS' or 'DNS over HTTPs'.">
+      <SettingCard class='bg-transparent' title='Use DNS Over HTTPS' description="Enables DNS Over HTTPS, useful if your ISP blocks certain domains. On Android this is a system setting, which cannot be changed here. It's usually named 'Private DNS' or 'DNS over HTTPs'.">
         <Button class='font-bold' on:click={() => native.setDOH('')} variant='secondary'>Configure DoH</Button>
       </SettingCard>
     {/if}
