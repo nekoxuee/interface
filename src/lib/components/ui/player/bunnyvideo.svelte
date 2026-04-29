@@ -358,8 +358,8 @@
         if (!videoFrameIterator) return
         const currentAsyncId = asyncId
 
-        while (true) {
-          try {
+        try {
+          while (true) {
             const nextResult = await videoFrameIterator.next()
             if (nextResult.done) return
 
@@ -373,11 +373,11 @@
               nextFrame = candidate
               return
             }
-          } catch (error) {
-            if (asyncId !== currentAsyncId) return
-
-            seekBackendTo(getBackendPlaybackTime())
           }
+        } catch (error) {
+          if (asyncId !== currentAsyncId) return
+
+          seekBackendTo(getBackendPlaybackTime())
         }
       }
     }

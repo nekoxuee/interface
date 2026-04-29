@@ -1,7 +1,7 @@
 import { finalizer } from 'abslink'
 import { expose } from 'abslink/w3c'
 
-import { SUPPORTS } from '../settings'
+import SUPPORTS from '../settings/supports'
 
 import type { NZBorURLSource, SearchFunction, SearchOptions, TorrentQuery, TorrentSource } from './types'
 
