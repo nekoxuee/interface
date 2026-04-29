@@ -50,7 +50,7 @@
 </script>
 
 <Pagination count={episodeCount} {perPage} bind:currentPage let:pages let:hasNext let:hasPrev let:range let:setPage siblingCount={1}>
-  <div class='overflow-y-auto pt-3 -ml-14 pl-14 -mr-3 pr-3 pointer-events-none -mb-3 pb-3' use:dragScroll>
+  <div class='overflow-y-auto pt-3 -ml-14 pl-14 -mr-3 pr-3 -mb-3 pb-3' use:dragScroll>
     <div class='grid grid-cols-1 sm:grid-cols-[repeat(auto-fit,minmax(500px,1fr))] place-items-center gap-x-4 gap-y-7 justify-center align-middle pointer-events-auto'>
       {#each getPage(currentPage, episodeList) as { episode, image, title, summary, airingAt, airdate, filler, length, rating, runtime } (episode)}
         {@const watched = _progress >= episode && !completed}

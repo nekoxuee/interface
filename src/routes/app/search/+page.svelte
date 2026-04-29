@@ -232,7 +232,7 @@
   let pressed = false
 </script>
 
-<div class='flex flex-col h-full overflow-y-auto overflow-x-clip -ml-14 pl-14 z-20 min-w-0 grow pointer-events-none' use:dragScroll use:infiniteScroll>
+<div class='flex flex-col h-full overflow-y-auto overflow-x-clip -ml-14 pl-14 min-w-0 grow' use:dragScroll use:infiniteScroll>
   <div class='sticky top-0 z-20 px-2 sm:px-10 pointer-events-auto shrink-0 overflow-clip bg-black pt-5'>
     <div class='flex flex-wrap'>
       {#if !$breakpoints.md}
