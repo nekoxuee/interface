@@ -4,6 +4,7 @@
   import { registerAc3Decoder } from '@mediabunny/ac3'
   import { AudioBufferSink, CanvasSink, Input, type InputTrack, type WrappedAudioBuffer, type WrappedCanvas, ALL_FORMATS, UrlSource } from 'mediabunny'
   import { createEventDispatcher } from 'svelte'
+  import { persisted } from 'svelte-persisted-store'
 
   import Subs from './subtitles'
 
@@ -161,6 +162,7 @@
 
   let canvas: HTMLCanvasElement
   let context: CanvasRenderingContext2D | null | undefined
+  let asyncId = 0
 
   $: canvasSource = canvas
 
@@ -191,23 +193,32 @@
   function getBackendPlaybackTime () {
     if (!audioCtx) return 0
 
-    // const baseLatency = audioCtx.baseLatency
-    // const outputLatency = audioCtx.outputLatency
-    const contextStart = audioContextStartTime ?? audioCtx.currentTime
+    if (readyState >= 3 && !paused) {
+      const baseLatency = audioCtx.baseLatency
+      // const outputLatency = audioCtx.outputLatency
+      const contextStart = audioContextStartTime ?? audioCtx.currentTime
 
-    return clamp(playbackTimeAtStart + clamp(audioCtx.currentTime - contextStart), 0, duration)
+      return clamp(playbackTimeAtStart + clamp(audioCtx.currentTime - contextStart - baseLatency), 0, duration)
+    } else {
+      return playbackTimeAtStart
+    }
   }
 
   async function waitForBackendAudioHeadroom (timestamp: number) {
-    while (timestamp - getBackendPlaybackTime() >= 1) {
-      if (paused) return
-      await new Promise(resolve => setTimeout(resolve, clamp(timestamp - getBackendPlaybackTime() - 0.5, 100)))
-    }
+    await new Promise<void>((resolve) => {
+      const id = setInterval(() => {
+        if (timestamp - getBackendPlaybackTime() < 1) {
+          clearInterval(id)
+          resolve()
+        }
+      }, 100)
+    })
   }
 
   function presentBackendFrame (frame: WrappedCanvas) {
     presentedFrames += 1
     context!.drawImage(frame.canvas, 0, 0)
+    nextFrame = null
 
     if (!frameCallbacks.size) return
 
@@ -235,15 +246,21 @@
       return safeTime
     }
 
+    asyncId++
+
+    const currentAsyncId = asyncId
+
     try {
       await videoFrameIterator?.return()
       videoFrameIterator = nextFrame = null
     } catch {}
 
+    if (asyncId !== currentAsyncId) return safeTime
+
     const iterator = videoFrameIterator = bufferAhead(videoSink.canvases(time), bufferAheadCount)
 
     const firstResult = await iterator.next()
-    if (firstResult.done) return safeTime
+    if (firstResult.done || asyncId !== currentAsyncId) return safeTime
 
     readyState = 2
 
@@ -339,18 +356,27 @@
         presentBackendFrame(frameToPresent)
 
         if (!videoFrameIterator) return
+        const currentAsyncId = asyncId
 
-        for (;;) {
-          const nextResult = await videoFrameIterator.next()
-          if (nextResult.done) return
+        while (true) {
+          try {
+            const nextResult = await videoFrameIterator.next()
+            if (nextResult.done) return
 
-          const candidate = nextResult.value
-          const playbackTime = getBackendPlaybackTime()
-          if (candidate.timestamp <= playbackTime) {
-            presentBackendFrame(candidate)
-          } else {
-            nextFrame = candidate
-            return
+            if (asyncId !== currentAsyncId) return
+
+            const candidate = nextResult.value
+            const playbackTime = getBackendPlaybackTime()
+            if (candidate.timestamp <= playbackTime) {
+              presentBackendFrame(candidate)
+            } else {
+              nextFrame = candidate
+              return
+            }
+          } catch (error) {
+            if (asyncId !== currentAsyncId) return
+
+            seekBackendTo(getBackendPlaybackTime())
           }
         }
       }
@@ -382,10 +408,10 @@
 
   export function pause () {
     if (lastSyncPaused) return
+    playbackTimeAtStart = getBackendPlaybackTime()
     paused = lastSyncPaused = true
     stopLoop()
 
-    playbackTimeAtStart = getBackendPlaybackTime()
     setCurrentTime()
 
     audioBufferIterator?.return()
@@ -395,9 +421,11 @@
   async function seekBackendTo (time: number) {
     const wasPaused = paused
     pause()
-
+    const currentAsyncId = asyncId + 1
     readyState = 1
-    playbackTimeAtStart = await startBackendVideoIterator(time)
+    const newTime = await startBackendVideoIterator(time)
+    if (asyncId !== currentAsyncId) return
+    playbackTimeAtStart = newTime
     setCurrentTime()
 
     if (!wasPaused && !ended && paused) {
@@ -545,6 +573,8 @@
       }
     }
   }
+
+  const hideOverlays = persisted('hideOverlays', false)
 </script>
 
 <canvas
@@ -560,4 +590,6 @@
   width={videoWidth}
   height={videoHeight}
 />
-<canvas class='size-full object-contain pointer-events-none absolute inset-0' use:createSubs />
+{#if !$hideOverlays}
+  <canvas class='size-full object-contain pointer-events-none absolute inset-0' use:createSubs />
+{/if}

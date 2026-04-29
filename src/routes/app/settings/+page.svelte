@@ -1,4 +1,6 @@
 <script lang='ts'>
+  import { persisted } from 'svelte-persisted-store'
+
   import { dev } from '$app/environment'
   import SettingCard from '$lib/components/SettingCard.svelte'
   import { Button } from '$lib/components/ui/button'
@@ -14,13 +16,7 @@
     $settings.playerPath = await native.selectPlayer()
   }
 
-  const items = {
-    VLC: 'VLC',
-    Infuse: 'Infuse',
-    nPlayer: 'nPlayer',
-    Outplayer: 'Outplayer',
-    MPV: 'MPV'
-  }
+  const hideOverlays = persisted('hideOverlays', false)
 </script>
 
 {#if ('queryLocalFonts' in self)}
@@ -96,25 +92,27 @@
   <SettingCard let:id title='EXPERIMENTAL: Custom Player Backend' description='Use a custom video player backend nstead of the built-in HTML5 video element. This can improve compatibility on some devices such as support for multi-track or more audio codecs, but is still experimental and might cause issues.'>
     <Switch {id} bind:checked={$settings.bunnyPlayer} />
   </SettingCard>
+  <SettingCard let:id title='Testing: Force disable video overlays' description='Forcefully disable video overlays for testing rendering performance.'>
+    <Switch {id} bind:checked={$hideOverlays} />
+  </SettingCard>
 {/if}
 
 <div class='font-weight-bold text-xl font-bold'>Interface Settings</div>
 <SettingCard let:id title='Minimal UI' description='Forces minimalistic player UI, hides controls.'>
   <Switch {id} bind:checked={$settings.minimalPlayerUI} />
 </SettingCard>
-<div class='font-weight-bold text-xl font-bold'>External Player Settings</div>
-<SettingCard let:id title='Enable External Player' description='Opens a custom user-picked external video player to play video, instead of using the built-in one.'>
-  <Switch {id} bind:checked={$settings.enableExternal} />
-</SettingCard>
-{#if SUPPORTS.isIOS}
-  <SettingCard let:id title='External Video Player' description='Executable for an external video player. Make sure the player supports HTTP sources.'>
-    <SingleCombo bind:value={$settings.playerPath} {items} class='w-32 shrink-0 border-input border' />
+
+{#if !SUPPORTS.isIOS}
+  <div class='font-weight-bold text-xl font-bold'>External Player Settings</div>
+  <SettingCard let:id title='Enable External Player' description='Opens a custom user-picked external video player to play video, instead of using the built-in one.'>
+    <Switch {id} bind:checked={$settings.enableExternal} />
   </SettingCard>
-{:else if !SUPPORTS.isAndroid}
-  <SettingCard let:id title='External Video Player' description='Executable for an external video player. Make sure the player supports HTTP sources.'>
-    <div class='flex'>
-      <Input type='url' bind:value={$settings.playerPath} readonly {id} class='w-32 shrink-0 bg-background rounded-r-none pointer-events-none' />
-      <Button class='rounded-l-none font-bold' on:click={selectPlayer} variant='secondary'>Select</Button>
-    </div>
-  </SettingCard>
+  {#if !SUPPORTS.isAndroid}
+    <SettingCard let:id title='External Video Player' description='Executable for an external video player. Make sure the player supports HTTP sources.'>
+      <div class='flex'>
+        <Input type='url' bind:value={$settings.playerPath} readonly {id} class='w-32 shrink-0 bg-background rounded-r-none pointer-events-none' />
+        <Button class='rounded-l-none font-bold' on:click={selectPlayer} variant='secondary'>Select</Button>
+      </div>
+    </SettingCard>
+  {/if}
 {/if}
