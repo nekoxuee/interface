@@ -291,8 +291,8 @@
 
     playbackTimeAtStart = clamp(currentTime)
 
-    videoWidth = canvas.width = selectedVideo.displayWidth
-    videoHeight = canvas.height = selectedVideo.displayHeight
+    videoWidth = selectedVideo.displayWidth
+    videoHeight = selectedVideo.displayHeight
 
     duration = await input.computeDuration()
     setCurrentTime(clamp(startTime, 0, duration || 0))
@@ -455,6 +455,7 @@
 
   function setupBackend (canvas: HTMLCanvasElement, src: string) {
     context = canvas.getContext('2d', { desynchronized: true, alpha: false })
+
     if (!context) handleBackendError(new Error('2D canvas context is unavailable for MediaBunny playback.'))
     registerAc3Decoder()
     load()
@@ -556,5 +557,7 @@
   on:pointermove
   use:setupBackend={src}
   {...$$restProps}
+  width={videoWidth}
+  height={videoHeight}
 />
 <canvas class='size-full object-contain pointer-events-none absolute inset-0' use:createSubs />
