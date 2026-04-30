@@ -2,8 +2,9 @@
 
 <script lang='ts'>
   import { registerAc3Decoder } from '@mediabunny/ac3'
-  import { AudioBufferSink, CanvasSink, Input, type InputTrack, type WrappedAudioBuffer, type WrappedCanvas, ALL_FORMATS, UrlSource } from 'mediabunny'
+  import { AudioBufferSink, CanvasSink, Input, type InputTrack, type WrappedAudioBuffer, type WrappedCanvas, ALL_FORMATS, UrlSource, canDecodeAudio } from 'mediabunny'
   import { createEventDispatcher } from 'svelte'
+  import { toast } from 'svelte-sonner'
 
   import audioWorkletUrl from './audioWorklet.ts?worker&url'
   import Subs from './subtitles'
@@ -13,7 +14,7 @@
   import type { TorrentFile } from 'native'
   import type { SvelteMediaTimeRange } from 'svelte/elements'
 
-  import { settings, SUPPORTS } from '$lib/modules/settings'
+  import { debug, settings, SUPPORTS } from '$lib/modules/settings'
 
   class DummyTrack implements Track {
     kind
@@ -170,6 +171,18 @@
   function setCurrentTime (nextCurrentTime: number = playbackTimeAtStart) {
     currentTime = nextCurrentTime
     lastObservedCurrentTime = nextCurrentTime
+  }
+
+  if ($debug) {
+    canDecodeAudio('flac').then(result => {
+      toast('FLAC decode support:' + result)
+    })
+    canDecodeAudio('ac3').then(result => {
+      toast('AC3 decode support:' + result)
+    })
+    canDecodeAudio('aac').then(result => {
+      toast('AAC decode support:' + result)
+    })
   }
 
   $: if (gain) {
