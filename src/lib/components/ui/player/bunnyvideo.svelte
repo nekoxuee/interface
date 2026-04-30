@@ -52,6 +52,36 @@
     }
   }
 
+  async function * bufferAhead<T> (
+    source: AsyncIterable<T>,
+    bufferSize: number
+  ): AsyncGenerator<T> {
+    const iter = source[Symbol.asyncIterator]()
+    const pending: Array<Promise<IteratorResult<T>>> = []
+    let done = false
+
+    const enqueue = () => {
+      if (!done) pending.push(iter.next())
+    }
+
+    for (let i = 0; i < bufferSize; i++) enqueue()
+
+    try {
+      while (pending.length > 0) {
+        const result = await pending.shift()!
+        if (result.done) { done = true; break }
+        enqueue()
+        yield result.value
+      }
+    } finally {
+      done = true
+      await iter.return?.()
+      // Drain in-flight promises so they don't float after cancellation.
+      // Errors are suppressed — the source is being torn down regardless.
+      await Promise.allSettled(pending)
+    }
+  }
+
   function clamp (value: number, min = 0, max = Number.MAX_SAFE_INTEGER) {
     return Math.min(max, Math.max(min, Number.isFinite(value) ? value : min)) || 0
   }
@@ -226,7 +256,7 @@
 
     if (asyncId !== currentAsyncId) return safeTime
 
-    const iterator = videoFrameIterator = videoSink.canvases(time)
+    const iterator = videoFrameIterator = bufferAhead(videoSink.canvases(time), 10)
 
     const firstResult = await iterator.next()
     if (firstResult.done || asyncId !== currentAsyncId) return safeTime
@@ -276,7 +306,7 @@
       gain.connect(audioCtx.destination)
     }
 
-    videoSink = new CanvasSink(selectedVideo, { poolSize: 2, fit: 'contain', alpha: false })
+    videoSink = new CanvasSink(selectedVideo, { poolSize: 12, fit: 'contain', alpha: false })
     audioSink = selectedAudio && new AudioBufferSink(selectedAudio)
 
     videoWidth = await selectedVideo.getDisplayWidth()
@@ -312,7 +342,7 @@
     audioContextStartTime = audioCtx.currentTime
     playbackTimeAtStart = currentTime
 
-    audioBufferIterator = audioSink!.buffers(currentTime)
+    audioBufferIterator = bufferAhead(audioSink!.buffers(currentTime), 3)
 
     const loop = async () => {
       rafHandle = requestAnimationFrame(loop)
