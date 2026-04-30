@@ -13,7 +13,7 @@
   import type { TorrentFile } from 'native'
   import type { SvelteMediaTimeRange } from 'svelte/elements'
 
-  import { settings } from '$lib/modules/settings'
+  import { settings, SUPPORTS } from '$lib/modules/settings'
 
   class DummyTrack implements Track {
     kind
@@ -412,10 +412,16 @@
         return arr
       })
 
-      workletNode!.port.postMessage(
-        { type: 'push', channelData },
-        channelData.map(a => a.buffer)
-      )
+      if (SUPPORTS.isIOS) {
+        workletNode!.port.postMessage(
+          { type: 'push', channelData }
+        )
+      } else {
+        workletNode!.port.postMessage(
+          { type: 'push', channelData },
+          channelData.map(a => a.buffer)
+        )
+      }
 
       samplesSent += frames
 

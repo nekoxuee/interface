@@ -18,36 +18,38 @@ class AudioStreamProcessor extends AudioWorkletProcessor {
   }
 
   process (_inputs: Float32Array[][], outputs: Float32Array[][], parameters: Record<string, Float32Array>): boolean {
-    const out = outputs[0]!
-    const blockSize = out[0]?.length ?? 128
-    let written = 0
+    try {
+      const out = outputs[0]!
+      const blockSize = out[0]?.length ?? 128
+      let written = 0
 
-    while (written < blockSize && this._chunks.length > 0) {
-      const chunk = this._chunks[0]!
-      const available = chunk.length - this._offset
-      const n = Math.min(available, blockSize - written)
+      while (written < blockSize && this._chunks.length > 0) {
+        const chunk = this._chunks[0]!
+        const available = chunk.length - this._offset
+        const n = Math.min(available, blockSize - written)
 
-      for (let c = 0; c < out.length; c++) {
-        const src = chunk.channelData[c] ?? chunk.channelData[0]!
+        for (let c = 0; c < out.length; c++) {
+          const src = chunk.channelData[c] ?? chunk.channelData[0]!
         out[c]!.set(src.subarray(this._offset, this._offset + n), written)
+        }
+
+        written += n
+        this._offset += n
+
+        if (this._offset >= chunk.length) {
+          this._chunks.shift()
+          this._offset = 0
+        }
       }
 
-      written += n
-      this._offset += n
+      for (let c = 0; c < out.length; c++) out[c]!.fill(0, written)
 
-      if (this._offset >= chunk.length) {
-        this._chunks.shift()
-        this._offset = 0
+      this._samplesConsumed += written
+
+      if (this._samplesConsumed % this._reportInterval < blockSize) {
+        this.port.postMessage({ type: 'progress', samplesConsumed: this._samplesConsumed })
       }
-    }
-
-    for (let c = 0; c < out.length; c++) out[c]!.fill(0, written)
-
-    this._samplesConsumed += written
-
-    if (this._samplesConsumed % this._reportInterval < blockSize) {
-      this.port.postMessage({ type: 'progress', samplesConsumed: this._samplesConsumed })
-    }
+    } catch {}
 
     return true
   }
