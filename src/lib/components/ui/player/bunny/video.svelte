@@ -15,7 +15,7 @@
     ])
 
     if (!ac3) await import('@mediabunny/ac3').then(({ registerAc3Decoder }) => registerAc3Decoder())
-    if (!flac) await import('./flac').then(({ registerFlacDecoder }) => registerFlacDecoder())
+    if (!flac || SUPPORTS.isIOS) await import('./flac').then(({ registerFlacDecoder }) => registerFlacDecoder())
   }
 </script>
 
