@@ -278,16 +278,6 @@
 
     if (asyncId !== currentAsyncId) return safeTime
 
-    // const iterator = videoFrameIterator = bufferAhead(mapAsyncGenerator(videoSink.samples(time), s => {
-    //   const uint8ClampedArray = new Uint8ClampedArray(s.allocationSize({ format: 'RGBA' }))
-    //   s.copyTo(uint8ClampedArray, { format: 'RGBA' })
-    //   s.close()
-    //   return {
-    //     timestamp: s.timestamp,
-    //     data: new ImageData(uint8ClampedArray, videoWidth, videoHeight)
-    //   }
-    // }), 5)
-
     const iterator = videoFrameIterator = bufferAhead(videoSink.samples(time), 3)
 
     const firstResult = await iterator.next()

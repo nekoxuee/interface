@@ -13,6 +13,7 @@
   import { Menubar } from '$lib/components/ui/menubar'
   import { Toaster } from '$lib/components/ui/sonner'
   import native from '$lib/modules/native'
+  import { inputType } from '$lib/modules/navigate'
   import { settings, SUPPORTS } from '$lib/modules/settings'
   import { cn } from '$lib/utils'
 
@@ -47,7 +48,7 @@
   <meta name='viewport' content='width=device-width, initial-scale={SUPPORTS.isAndroidTV ? $settings.uiScale / devicePixelRatio : (SUPPORTS.isAndroid || SUPPORTS.isIOS) ? $settings.uiScale : 1}, maximum-scale=2, user-scalable=0, viewport-fit=cover' />
 </svelte:head>
 
-<div class={cn('size-full flex flex-col backface-hidden bg-black relative overflow-clip')} bind:this={root} id='root'>
+<div class={cn('size-full flex flex-col backface-hidden bg-black relative overflow-clip')} bind:this={root} id='root' data-input={$inputType}>
   <ProgressBar zIndex={100} bind:complete {displayThresholdMs} />
   <Toaster position='top-right' expand={true} />
 

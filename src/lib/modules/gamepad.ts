@@ -1,3 +1,4 @@
+import { activityState } from './idle'
 import { inputType } from './navigate'
 
 // Standard Gamepad mapping per W3C spec
@@ -86,10 +87,10 @@ function handleButton (gamepadIndex: number, buttonIndex: number, isDown: boolea
 
 function poll () {
   rafId = requestAnimationFrame(poll)
+  if (activityState.value === 'inactive') return
   const now = performance.now()
-  const pads = navigator.getGamepads()
 
-  for (const pad of pads) {
+  for (const pad of navigator.getGamepads()) {
     if (!pad) continue
 
     for (let i = 0; i < pad.buttons.length; i++) {
@@ -106,10 +107,8 @@ function poll () {
 }
 
 function handleStickAxis (gamepadIndex: number, negIdx: number, posIdx: number, value: number, now: number) {
-  const negId = `${gamepadIndex}:${negIdx}`
-  const posId = `${gamepadIndex}:${posIdx}`
-  const negPressed = pressed.has(negId)
-  const posPressed = pressed.has(posId)
+  const negPressed = pressed.has(`${gamepadIndex}:${negIdx}`)
+  const posPressed = pressed.has(`${gamepadIndex}:${posIdx}`)
 
   // Hysteresis: higher threshold to press, lower to release
   const negActive = negPressed ? value < -STICK_RELEASE : value < -STICK_PRESS
@@ -138,12 +137,12 @@ function stop () {
   pressed.clear()
 }
 
-window.addEventListener('gamepadconnected', () => {
+addEventListener('gamepadconnected', () => {
   connectedCount++
   start()
 })
 
-window.addEventListener('gamepaddisconnected', () => {
+addEventListener('gamepaddisconnected', () => {
   connectedCount = Math.max(0, connectedCount - 1)
   if (connectedCount === 0) stop()
 })
@@ -151,9 +150,9 @@ window.addEventListener('gamepaddisconnected', () => {
 // Some browsers only expose already-connected gamepads via polling, not events.
 // If a gamepad is already plugged in at module load, kick off polling.
 if (typeof navigator !== 'undefined' && typeof navigator.getGamepads === 'function') {
-  const existing = navigator.getGamepads().filter(g => !!g)
-  if (existing.length) {
-    connectedCount = existing.length
+  const existing = navigator.getGamepads().filter(g => !!g).length
+  if (existing) {
+    connectedCount = existing
     start()
   }
 }

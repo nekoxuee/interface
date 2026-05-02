@@ -1,5 +1,4 @@
-import { writable } from 'simple-store-svelte'
-import { readable } from 'svelte/store'
+import { writable, readable } from 'simple-store-svelte'
 
 export const activityState = readable<'active' | 'inactive'>(document.hasFocus() ? 'active' : 'inactive', set => {
   set(document.hasFocus() ? 'active' : 'inactive')
