@@ -214,7 +214,7 @@
     if (id) {
       for (const track of video.audioTracks ?? []) {
         track.enabled = track.id === id
-        playAnimation(track.label)
+        if (track.id === id) playAnimation(track.label)
       }
 
       if (useMediaBunnyPlayback) return
@@ -225,7 +225,7 @@
     if (id) {
       for (const track of video.videoTracks ?? []) {
         track.selected = track.id === id
-        playAnimation(track.label)
+        if (track.id === id) playAnimation(track.label)
       }
     }
   }

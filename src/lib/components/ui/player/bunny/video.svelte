@@ -311,6 +311,9 @@
     const selectedVideo = playbackVideoTracks.find(track => `${track.id}` === selectedVideoId) ?? playbackVideoTracks[0]!
     const selectedAudio = playbackAudioTracks.find(track => `${track.id}` === selectedAudioId) ?? playbackAudioTracks[0]
 
+    selectedAudioId = selectedAudio?.id.toString()
+    selectedVideoId = selectedVideo.id.toString()
+
     const sampleRate = await selectedAudio?.getSampleRate()
 
     if (!audioCtx || !gain || (audioCtx.sampleRate !== sampleRate)) {
@@ -348,7 +351,10 @@
     if (initial) dispatch('loadedmetadata')
     readyState = 1
 
-    if (!paused) await play()
+    if (!paused) {
+      lastSyncPaused = true
+      await play()
+    }
 
     if (initial) dispatch('loadeddata')
   }
