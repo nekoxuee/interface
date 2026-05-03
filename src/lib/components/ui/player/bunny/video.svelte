@@ -214,18 +214,6 @@
     return playbackTimeAtStart
   }
 
-  async function waitForBackendAudioHeadroom () {
-    await new Promise<void>((resolve) => {
-      const id = setInterval(() => {
-        const bufferedSeconds = (samplesSent - samplesConsumed) / audioCtx!.sampleRate
-        if (bufferedSeconds < 2) {
-          clearInterval(id)
-          resolve()
-        }
-      }, 100)
-    })
-  }
-
   function presentBackendFrame (frame: VideoSample) {
     presentedFrames += 1
     context!.drawImage(frame.toCanvasImageSource(), 0, 0)
@@ -425,8 +413,9 @@
 
     if (!rafHandle) loop()
 
+    const currentAsyncId = asyncId
     for await (const { buffer } of audioBufferIterator) {
-      if (paused) break
+      if (paused || asyncId !== currentAsyncId) break
 
       const frames = buffer.length
       const channelData = Array.from({ length: buffer.numberOfChannels }, (_, c) => {
@@ -446,7 +435,19 @@
       samplesSent += frames
 
       const bufferedSeconds = (samplesSent - samplesConsumed) / audioCtx.sampleRate
-      if (bufferedSeconds >= 2) await waitForBackendAudioHeadroom()
+      if (bufferedSeconds >= 2) {
+        // eslint-disable-next-line @typescript-eslint/no-loop-func
+        await new Promise<void>((resolve) => {
+          const id = setInterval(() => {
+            if (asyncId !== currentAsyncId) return
+            const bufferedSeconds = (samplesSent - samplesConsumed) / (audioCtx?.sampleRate ?? 1)
+            if (bufferedSeconds < 2) {
+              clearInterval(id)
+              resolve()
+            }
+          }, 100)
+        })
+      }
     }
   }
 
@@ -605,7 +606,7 @@
       if (!subtitles) return
 
       await subtitles.jassub?.ready
-      subtitles.jassub?.manualRender(meta)
+      subtitles?.jassub?.manualRender(meta)
 
       handle = requestVideoFrameCallback(loop)
     }
@@ -615,6 +616,7 @@
     return {
       destroy () {
         subtitles?.destroy()
+        subtitles = undefined
         cancelVideoFrameCallback(handle)
       }
     }

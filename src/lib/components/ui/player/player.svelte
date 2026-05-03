@@ -415,7 +415,7 @@
 
   $: playbackIndex = Math.max(0, Math.floor(currentTime / thumbnailer.interval))
 
-  $: if (readyState > 1 && !seekIndex) thumbnailer._paintThumbnail(canvasSource, playbackIndex, videoWidth, videoHeight)
+  $: if (readyState > 1 && !seekIndex && canvasSource) thumbnailer._paintThumbnail(canvasSource, playbackIndex, videoWidth, videoHeight)
 
   $: native.setMediaSession(mediaInfo.session, mediaInfo.media.id, safeduration)
   $: native.setPositionState({ duration: safeduration, position: Math.min(Math.max(0, currentTime), safeduration), playbackRate: $playbackRate }, readyState === 0 ? 'none' : paused ? 'paused' : 'playing')
