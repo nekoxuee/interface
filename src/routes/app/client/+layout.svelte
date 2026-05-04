@@ -28,6 +28,14 @@
       }
     },
     {
+      title: 'Trackers',
+      href: '/app/client/trackers/',
+      overview: {
+        title: 'Tracker Status',
+        desc: 'Trackers for the currently active torrent, their status, and statistics about seeders/leechers and download amount.'
+      }
+    },
+    {
       title: 'Library',
       href: '/app/client/library/',
       overview: {

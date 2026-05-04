@@ -218,7 +218,7 @@ importers:
         version: 2.1.3
       native:
         specifier: github:hayase-app/native
-        version: https://codeload.github.com/hayase-app/native/tar.gz/8e9d865f111e356a087e14865d9451771546aad2
+        version: https://codeload.github.com/hayase-app/native/tar.gz/241e772766500b739d496e562a755b4a30605782
       rollup-plugin-license:
         specifier: ^3.7.1
         version: 3.7.1(picomatch@4.0.3)(rollup@4.55.1)
@@ -2168,8 +2168,8 @@ packages:
     engines: {node: ^18 || >=20}
     hasBin: true
 
-  native@https://codeload.github.com/hayase-app/native/tar.gz/8e9d865f111e356a087e14865d9451771546aad2:
-    resolution: {tarball: https://codeload.github.com/hayase-app/native/tar.gz/8e9d865f111e356a087e14865d9451771546aad2}
+  native@https://codeload.github.com/hayase-app/native/tar.gz/241e772766500b739d496e562a755b4a30605782:
+    resolution: {tarball: https://codeload.github.com/hayase-app/native/tar.gz/241e772766500b739d496e562a755b4a30605782}
     version: 1.0.0
 
   natural-compare@1.4.0:
@@ -5067,7 +5067,7 @@ snapshots:
 
   nanoid@5.1.5: {}
 
-  native@https://codeload.github.com/hayase-app/native/tar.gz/8e9d865f111e356a087e14865d9451771546aad2:
+  native@https://codeload.github.com/hayase-app/native/tar.gz/241e772766500b739d496e562a755b4a30605782:
     dependencies:
       '@types/chromecast-caf-receiver': 6.0.26
 

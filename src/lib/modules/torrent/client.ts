@@ -1,7 +1,7 @@
 import Debug from 'debug'
 import parseTorrent from 'parse-torrent'
 import { writable } from 'simple-store-svelte'
-import { get } from 'svelte/store'
+import { derived, get } from 'svelte/store'
 import { persisted } from 'svelte-persisted-store'
 import { toast } from 'svelte-sonner'
 
@@ -41,6 +41,8 @@ export const server = new class ServerClient {
   peers = this._timedSafeStore([], native.peerInfo)
 
   files = this._timedSafeStore([], native.fileInfo)
+
+  trackers = derived(this._timedSafeStore({}, native.trackers, 120_000), ($trackers) => Object.entries($trackers).map(([announce, trackers]) => ({ announce, ...trackers })))
 
   library = this._timedSafeStore([], native.library, 120_000)
 
