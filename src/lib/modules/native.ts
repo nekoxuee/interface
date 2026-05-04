@@ -162,6 +162,7 @@ export default Object.assign<Native, Partial<Native>>({
   }),
   fileInfo: async () => [],
   peerInfo: async () => [],
+  trackers: async () => ({}),
   protocolStatus: async () => ({
     dht: false,
     lsd: false,
