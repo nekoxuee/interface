@@ -1,8 +1,10 @@
 <script lang='ts'>
   // @ts-nocheck i give up with dynamic keys
+  import { get } from 'idb-keyval'
+
   import type { ExtensionConfig } from '$lib/modules/extensions/types'
 
-  import { Bolt, Trash } from '$lib/components/icons/animated'
+  import { Bolt, Trash, Code } from '$lib/components/icons/animated'
   import { Button } from '$lib/components/ui/button'
   import * as Dialog from '$lib/components/ui/dialog'
   import { Input } from '$lib/components/ui/input'
@@ -20,15 +22,34 @@
 
 <div class='flex justify-between flex-col items-end pb-1.5'>
   {#if $exopts[config.id] !== undefined}
-    {#if Object.keys(config.options ?? {}).length}
+    <div>
       <Dialog.Root portal='#root'>
         <Dialog.Trigger let:builder asChild>
-          <Button builders={[builder]} variant='ghost' size='icon-sm' class='animated-icon'><Bolt size={18} /></Button>
+          <Button builders={[builder]} variant='ghost' size='icon-sm' class='animated-icon'><Code size={18} /></Button>
         </Dialog.Trigger>
-        <Dialog.Content>
-          <Dialog.Header>
-            <div class='space-y-4'>
-              <Dialog.Title class='font-weight-bold font-bold'>{config.name} Settings</Dialog.Title>
+        <Dialog.Content class='flex max-h-[95%] overflow-auto flex-col'>
+          <Dialog.Title class='font-weight-bold font-bold'>{config.name} Source Code</Dialog.Title>
+          {#await get(config.id)}
+            Loading...
+          {:then code}
+            <code class='break-all flex max-h-full overflow-auto'>{code}</code>
+          {/await}
+          <Dialog.Close let:builder asChild>
+            <Button variant='secondary' builders={[builder]}>Close</Button>
+          </Dialog.Close>
+        </Dialog.Content>
+      </Dialog.Root>
+      <Button variant='ghost' size='icon-sm' class='animated-icon select:text-red-600' on:click={deleteExtension}>
+        <Trash size={16} />
+      </Button>
+      {#if Object.keys(config.options ?? {}).length}
+        <Dialog.Root portal='#root'>
+          <Dialog.Trigger let:builder asChild>
+            <Button builders={[builder]} variant='ghost' size='icon-sm' class='animated-icon'><Bolt size={18} /></Button>
+          </Dialog.Trigger>
+          <Dialog.Content class='flex max-h-[95%] overflow-auto flex-col'>
+            <Dialog.Title class='font-weight-bold font-bold'>{config.name} Settings</Dialog.Title>
+            <div class='flex flex-col max-h-full gap-y-4 overflow-auto'>
               {#each Object.entries(config.options ?? {}) as [id, options] (id)}
                 {#if options.type === 'string'}
                   <div class='space-y-2'>
@@ -66,21 +87,16 @@
                   </div>
                 {/if}
               {/each}
-              <div class='pt-3 gap-3 mt-auto flex flex-col sm:flex-row-reverse'>
-                <Dialog.Close let:builder asChild>
-                  <Button variant='secondary' builders={[builder]}>Cancel</Button>
-                  <Button variant='destructive' on:click={deleteExtension} builders={[builder]}>Delete Extension</Button>
-                </Dialog.Close>
-              </div>
             </div>
-          </Dialog.Header>
-        </Dialog.Content>
-      </Dialog.Root>
-    {:else}
-      <Button variant='ghost' size='icon-sm' class='animated-icon select:text-red-600' on:click={deleteExtension}>
-        <Trash size={16} />
-      </Button>
-    {/if}
+            <Dialog.Close let:builder asChild>
+              <Button variant='secondary' builders={[builder]}>Close</Button>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Root>
+      {:else}
+        <Button disabled variant='ghost' size='icon-sm' class='animated-icon'><Bolt size={18} /></Button>
+      {/if}
+    </div>
     <Switch class='mt-auto' bind:checked={$exopts[config.id].enabled} hideState={true} />
   {/if}
 </div>
