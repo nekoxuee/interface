@@ -8,7 +8,7 @@ import { toast } from 'svelte-sonner'
 import client from '../auth/client'
 import { extensions } from '../extensions'
 import native from '../native'
-import { SUPPORTS } from '../settings'
+import { settings, SUPPORTS } from '../settings'
 import { w2globby } from '../w2g/lobby'
 
 import type { Media } from '../anilist'
@@ -118,11 +118,12 @@ export const server = new class ServerClient {
   }
 
   async _addNZBs (hash: string) {
-    const nzbs = await extensions.getNZBResultsFromExtensions(hash)
+    const set = get(settings)
+    if (!set.nzbDomain || !set.nzbLogin || !set.nzbPassword || !set.nzbPort || !set.nzbPoolSize) return
 
-    for (const { nzb, options } of nzbs) {
+    for (const nzb of await extensions.getNZBResultsFromExtensions(hash)) {
       try {
-        await native.createNZB(hash, nzb, options.domain!, Number(options.port!), options.username!, options.password!, Number(options.poolSize!) || 5)
+        await native.createNZB(hash, nzb, set.nzbDomain, Math.trunc(set.nzbPort), set.nzbLogin, set.nzbPassword, Math.trunc(set.nzbPoolSize))
       } catch (e) {
         toast.error('Failed to add NZB', { description: (e as Error).message })
       }

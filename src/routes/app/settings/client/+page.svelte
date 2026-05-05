@@ -33,7 +33,7 @@
       <Switch {id} bind:checked={$settings.enableDoH} />
     </SettingCard>
     <SettingCard let:id title='DNS Over HTTPS URL' description='What URL to use for querying DNS Over HTTPS.'>
-      <Input type='url' bind:value={$settings.doHURL} {id} class='w-80 shrink-0 bg-background' />
+      <Input type='url' bind:value={$settings.doHURL} {id} placeholder='https://cloudflare-dns.com/dns-query' class='w-80 shrink-0 bg-background' />
     </SettingCard>
   {:else}
     <SettingCard title='Use DNS Over HTTPS' description="Enables DNS Over HTTPS, useful if your ISP blocks certain domains. On Android this is a system setting, which cannot be changed here. It's usually named 'Private DNS' or 'DNS over HTTPs'.">
@@ -42,19 +42,18 @@
   {/if}
 {/if}
 
-<div class='font-weight-bold text-xl font-bold'>Client Settings</div>
-{#if !SUPPORTS.isIOS}
-  <SettingCard let:id title='Torrent Download Location' description={`Path to the folder used to store torrents. By default this is the OS's TEMP/TMP cache folder, which might lose data when your OS tries to reclaim storage.${SUPPORTS.isAndroid ? '\n\nSD Card saves to the Cards Download folder. If SD Card is not available torrents will automatically be saved to the Phone\'s Downloads folder' : ''}`}>
-    <div class='flex'>
-      <Input type='url' bind:value={$settings.torrentPath} readonly {id} placeholder='/tmp/webtorrent' class='sm:w-60 bg-background rounded-r-none pointer-events-none' />
-      {#if !SUPPORTS.isAndroid}
-        <Button class='rounded-l-none font-bold' on:click={() => selectDownloadFolder()} variant='secondary'>Select Folder</Button>
-      {:else}
-        <SingleCombo bind:value={$settings.androidStorageType} items={androidDirectories} class='w-32 shrink-0 border-input border rounded-l-none ' onSelected={selectDownloadFolder} />
-      {/if}
-    </div>
-  </SettingCard>
-{/if}
+<div class='font-weight-bold text-xl font-bold'>Torrent Client Settings</div>
+
+<SettingCard let:id title='Torrent Download Location' description={`Path to the folder used to store torrents. By default this is the OS's TEMP/TMP cache folder, which might lose data when your OS tries to reclaim storage.${SUPPORTS.isAndroid ? '\n\nSD Card saves to the Cards Download folder. If SD Card is not available torrents will automatically be saved to the Phone\'s Downloads folder' : ''}`}>
+  <div class='flex'>
+    <Input type='url' bind:value={$settings.torrentPath} readonly {id} placeholder='/tmp/webtorrent' class='sm:w-60 bg-background rounded-r-none pointer-events-none' />
+    {#if !SUPPORTS.isAndroid && !SUPPORTS.isIOS}
+      <Button class='rounded-l-none font-bold' on:click={() => selectDownloadFolder()} variant='secondary'>Select Folder</Button>
+    {:else}
+      <SingleCombo bind:value={$settings.androidStorageType} items={androidDirectories} class='w-32 shrink-0 border-input border rounded-l-none ' onSelected={selectDownloadFolder} />
+    {/if}
+  </div>
+</SettingCard>
 <SettingCard let:id title='Persist Files' description="Keeps torrents files instead of deleting them after a new torrent is played. This doesn't seed the files, only keeps them on your drive. This will quickly fill up your storage.">
   <Switch {id} bind:checked={$settings.torrentPersist} />
 </SettingCard>
@@ -81,4 +80,21 @@
 </SettingCard>
 <SettingCard let:id title='Disable PeX' description='Disables Peer Exchange for use in private trackers to improve privacy. Might greatly reduce the amount of discovered peers.'>
   <Switch {id} bind:checked={$settings.torrentPeX} />
+</SettingCard>
+
+<div class='font-weight-bold text-xl font-bold'>NZB Client Settings</div>
+<SettingCard let:id title='Provider Domain' description='The domain of your NZB provider, without the protocol. For example, if your provider is accessed at https://news.example.com, just enter news.example.com here.'>
+  <Input type='url' bind:value={$settings.nzbDomain} {id} placeholder='news.example.com' class='w-80 shrink-0 bg-background' />
+</SettingCard>
+<SettingCard let:id title='Provider Login' description='The Login/Username for your NZB provider.'>
+  <Input type='text' bind:value={$settings.nzbLogin} {id} placeholder='admin' class='w-80 shrink-0 bg-background' />
+</SettingCard>
+<SettingCard let:id title='Provider Password' description='The Password for your NZB provider. This is stored in plaintext in the settings file, so be aware of that.'>
+  <Input type='password' bind:value={$settings.nzbPassword} {id} placeholder='admin1' class='w-80 shrink-0 bg-background' />
+</SettingCard>
+<SettingCard let:id title='Connection Port' description='The port used to connect to your NZB provider. 119 is the default for NNTP.'>
+  <Input type='number' inputmode='numeric' pattern='[0-9]*' step='1' bind:value={$settings.nzbPort} {id} placeholder='119' class='w-32 shrink-0 bg-background' />
+</SettingCard>
+<SettingCard let:id title='Connection Pool Size' description={'The number of simultaneous connections to use for downloading from your NZB provider. Higher values might increase download speeds but can cause issues with some providers if set too high.\n\nThis is per extension, so if you have multiple NZB extensions configured, each will use up to this many connections.'}>
+  <Input type='number' inputmode='numeric' pattern='[0-9]*' step='1' bind:value={$settings.nzbPoolSize} {id} placeholder='5' class='w-32 shrink-0 bg-background' />
 </SettingCard>

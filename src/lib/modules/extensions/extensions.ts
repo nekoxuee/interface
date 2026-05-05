@@ -300,7 +300,7 @@ export const extensions = new class Extensions {
   async getNZBResultsFromExtensions (hash: string) {
     await storage.ready
     const extensions = storage.codeManager.extensions
-    const results: Array<{ nzb: string, options: Record<string, string> }> = []
+    const results: string[] = []
     const errors: Array<{ error: Error, extension: string }> = []
 
     const extopts = get(extensionOptions)
@@ -309,12 +309,11 @@ export const extensions = new class Extensions {
     for (const [id, worker] of extensions.entries()) {
       const thisExtOpts = extopts[id]!
       if (!thisExtOpts.enabled) continue
-      if (!thisExtOpts.options.username || !thisExtOpts.options.password || !thisExtOpts.options.domain || !thisExtOpts.options.port || !thisExtOpts.options.poolSize) continue
       if (configs[id]!.type !== 'nzb') continue
       try {
         const nzb = await worker.query(hash, thisExtOpts.options)
         if (!nzb) continue
-        results.push({ nzb, options: thisExtOpts.options })
+        results.push(nzb)
       } catch (error) {
         errors.push({ error: error as Error, extension: id })
       }

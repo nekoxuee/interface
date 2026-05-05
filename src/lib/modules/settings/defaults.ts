@@ -44,5 +44,10 @@ export default {
   showHentai: false,
   hideSpoilers: false,
   unsafeWebGPU: false,
-  bunnyPlayer: SUPPORTS.isIOS
+  bunnyPlayer: SUPPORTS.isIOS,
+  nzbDomain: '',
+  nzbLogin: '',
+  nzbPassword: '',
+  nzbPort: 119,
+  nzbPoolSize: 4
 }
