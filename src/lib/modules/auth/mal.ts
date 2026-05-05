@@ -66,6 +66,8 @@ interface MALListUpdate {
   num_times_rewatched?: number
   is_rewatching?: boolean
   rewatch_value?: number
+  start_date?: string
+  finish_date?: string
 }
 
 interface MALStatus {
@@ -164,13 +166,13 @@ export default new class MALSync {
   }
 
   async _request<T = object> (url: string | URL, method: string, body?: URLSearchParams): Promise<T | { error: string }> {
-    const auth = get(this.auth)
+    let auth = get(this.auth)
     try {
       if (auth) {
         const expiresAt = (auth.created_at + auth.expires_in) * 1000
 
         if (expiresAt < Date.now() - 1000 * 60 * 5 && !body?.get('refresh_token')) { // 5 minutes before expiry
-          await this._refresh()
+          auth = await this._refresh(auth)
         }
       }
 
@@ -240,10 +242,9 @@ export default new class MALSync {
     return await this._request<T>(url, 'DELETE')
   }
 
-  async _refresh () {
+  async _refresh (auth?: MALOAuth) {
     debug('Refreshing MAL token')
-    const auth = get(this.auth)
-    if (!auth?.refresh_token) return
+    if (!auth?.refresh_token) return auth
 
     const data = await this._post<MALOAuth>(
       ENDPOINTS.API_OAUTH,
@@ -255,11 +256,16 @@ export default new class MALSync {
     )
 
     if ('access_token' in data) {
-      this.auth.set({
-        ...data,
-        created_at: Math.floor(Date.now() / 1000)
-      })
+      data.created_at = Math.floor(Date.now() / 1000)
+
+      this.auth.set(data)
+
+      return data
+    } else {
+      debug('Failed to refresh MAL token: ' + data.error)
     }
+
+    return auth
   }
 
   async login () {
@@ -468,14 +474,20 @@ export default new class MALSync {
       return
     }
 
+    const status = AL_TO_MAL_STATUS[variables.status!]
     const body: MALListUpdate = {
-      status: AL_TO_MAL_STATUS[variables.status!],
+      status,
       is_rewatching: variables.status === 'REPEATING'
     }
 
     if (variables.progress) body.num_watched_episodes = variables.progress
     if (variables.score) body.score = variables.score / 10
     if (variables.repeat) body.num_times_rewatched = variables.repeat
+
+    const today = new Date().toISOString().split('T')[0]!
+    const notrepeating = (!variables.repeat || variables.repeat === 0)
+    if (status === 'watching' && notrepeating && variables.progress === 1) body.start_date = today
+    if (status === 'completed' && notrepeating) body.finish_date = today
 
     const res = await this._patch<MALStatus>(`${ENDPOINTS.API_ANIME}/${malId}/my_list_status`, body)
 

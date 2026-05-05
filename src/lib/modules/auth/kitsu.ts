@@ -106,13 +106,13 @@ export default new class KitsuSync {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async _request <T = object> (url: string | URL, method: string, body?: any): Promise<T | KitsuError> {
-    const auth = get(this.auth)
+    let auth = get(this.auth)
     try {
       if (auth) {
         const expiresAt = (auth.created_at + auth.expires_in) * 1000
 
         if (expiresAt < Date.now() - 1000 * 60 * 5) { // 5 minutes before expiry
-          await this._refresh()
+          auth = await this._refresh(auth)
         }
       }
       const res = await fetch(url, {
@@ -172,20 +172,25 @@ export default new class KitsuSync {
     return await this._request<T>(url, 'PATCH', body)
   }
 
-  async _refresh () {
+  async _refresh (auth?: OAuth) {
     debug('refreshing Kitsu auth token')
-    const auth = get(this.auth)
+    if (!auth?.refresh_token) return auth
+
     const data = await this._post<OAuth>(
       ENDPOINTS.API_OAUTH,
       {
         grant_type: 'refresh_token',
-        refresh_token: auth?.refresh_token
+        refresh_token: auth.refresh_token
       }
     )
 
     if ('access_token' in data) {
       this.auth.set(data)
+
+      return data
     }
+
+    return auth
   }
 
   async login (username: string, password: string) {
