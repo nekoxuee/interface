@@ -109,8 +109,12 @@ const config = {
     if (warning.code === 'element_invalid_self_closing_tag') return
     handler?.(warning)
   },
-  preprocess: vitePreprocess({ }),
+  preprocess: vitePreprocess(),
   kit: {
+    // router: {
+    //   type: 'hash',
+    //   resolution: 'client'
+    // },
     adapter: adapterWithFontPreload({
       fallback: 'index.html',
       fontNames: ['nunito-latin-wght'],

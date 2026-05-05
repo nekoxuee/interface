@@ -70,3 +70,20 @@ export interface MappingsResponse {
   imdb_id?: string
   themoviedb_id?: string
 }
+
+export interface ImagesResponse {
+  backdrops: Backdrop[]
+  id?: number
+  logos: Backdrop[]
+  posters: Backdrop[]
+}
+
+export interface Backdrop {
+  file_path: string
+  width: number
+  height: number
+  aspect_ratio: number
+  iso_639_1?: string
+  vote_average: number
+  vote_count: number
+}
