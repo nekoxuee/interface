@@ -246,6 +246,7 @@ export default new class MALSync {
     debug('Refreshing MAL token')
     if (!auth?.refresh_token) return auth
 
+    this.auth.set(undefined)
     const data = await this._post<MALOAuth>(
       ENDPOINTS.API_OAUTH,
       {

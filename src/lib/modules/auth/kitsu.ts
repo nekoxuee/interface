@@ -176,6 +176,7 @@ export default new class KitsuSync {
     debug('refreshing Kitsu auth token')
     if (!auth?.refresh_token) return auth
 
+    this.auth.set(undefined)
     const data = await this._post<OAuth>(
       ENDPOINTS.API_OAUTH,
       {
