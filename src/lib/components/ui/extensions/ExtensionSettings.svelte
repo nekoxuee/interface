@@ -27,12 +27,12 @@
         <Dialog.Trigger let:builder asChild>
           <Button builders={[builder]} variant='ghost' size='icon-sm' class='animated-icon'><Code size={18} /></Button>
         </Dialog.Trigger>
-        <Dialog.Content class='flex max-h-[95%] overflow-auto flex-col'>
+        <Dialog.Content class='flex max-h-[95%] max-w-[95%] overflow-auto flex-col !w-auto'>
           <Dialog.Title class='font-weight-bold font-bold'>{config.name} Source Code</Dialog.Title>
           {#await get(config.id)}
             Loading...
           {:then code}
-            <code class='break-all flex max-h-full overflow-auto'>{code}</code>
+            <code class='break-all flex max-h-full overflow-auto whitespace-pre-wrap w-max'>{code}</code>
           {/await}
           <Dialog.Close let:builder asChild>
             <Button variant='secondary' builders={[builder]}>Close</Button>
