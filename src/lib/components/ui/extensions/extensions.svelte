@@ -125,7 +125,7 @@
                 </div>
               </div>
             </div>
-            <div class='flex-wrap w-full justify-start gap-2 flex text-neutral-300 text-sm'>
+            <div class='[flex-wrap:balance] w-full justify-start gap-2 flex text-neutral-300 text-sm'>
               {#if config.deprecated}
                 <div class='rounded px-3 py-0.5 font-bold bg-yellow-800 leading-snug'>
                   Deprecated

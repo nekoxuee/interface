@@ -55,6 +55,22 @@ function derivedDeep<T, U> (store: Readable<T>, fn: (value: T) => U) {
   })
 }
 
+function skipFirst<T> (store: Readable<T>) {
+  let first = true
+  return {
+    ...store,
+    subscribe: (run: (value: T) => void) => {
+      return store.subscribe((value) => {
+        if (first) {
+          first = false
+          return
+        }
+        run(value)
+      })
+    }
+  }
+}
+
 const torrentSettings = derivedDeep(settings, ($settings) => ({
   torrentPersist: $settings.torrentPersist,
   torrentDHT: $settings.torrentDHT,
@@ -82,7 +98,7 @@ const dohSettings = derivedDeep(settings, $settings => ({
   doHURL: $settings.doHURL
 }))
 
-torrentSettings.subscribe(native.updateSettings)
+skipFirst(torrentSettings).subscribe(native.updateSettings)
 hideToTray.subscribe(native.setHideToTray)
 idleAnimation.subscribe(native.transparency)
 uiScale.subscribe(native.setZoom)

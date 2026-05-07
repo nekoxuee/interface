@@ -22,7 +22,7 @@
 
 <div class='flex justify-between flex-col items-end pb-1.5'>
   {#if $exopts[config.id] !== undefined}
-    <div>
+    <div class='flex'>
       <Dialog.Root portal='#root'>
         <Dialog.Trigger let:builder asChild>
           <Button builders={[builder]} variant='ghost' size='icon-sm' class='animated-icon'><Code size={18} /></Button>

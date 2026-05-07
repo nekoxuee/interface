@@ -71,7 +71,7 @@ export type NZBQuery<T> = {
 export type NZBQueryWithFetch<T> = NZBQuery<T> & { fetch: typeof fetch }
 
 export type SearchFunction = (query: AnimeQueryWithFetch, options?: SearchOptions) => Promise<TorrentResult[]>
-export type NZBFunction<T> = (query: NZBQueryWithFetch<T>, options?: SearchOptions) => Promise<string>
+export type NZBFunction<T> = (query: NZBQueryWithFetch<T>, options?: SearchOptions) => Promise<string | undefined>
 
 export class TorrentSource {
   test: () => Promise<boolean>
