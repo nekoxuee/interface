@@ -63,7 +63,12 @@ const torrentSettings = derivedDeep(settings, ($settings) => ({
   maxConns: $settings.maxConns,
   torrentPort: $settings.torrentPort,
   dhtPort: $settings.dhtPort,
-  torrentPeX: $settings.torrentPeX
+  torrentPeX: $settings.torrentPeX,
+  nzbDomain: $settings.nzbDomain,
+  nzbLogin: $settings.nzbLogin,
+  nzbPassword: $settings.nzbPassword,
+  nzbPort: $settings.nzbPort,
+  nzbPoolSize: $settings.nzbPoolSize
 }))
 
 const hideToTray = derived(settings, $settings => $settings.hideToTray)

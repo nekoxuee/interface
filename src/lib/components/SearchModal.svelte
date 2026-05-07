@@ -78,14 +78,14 @@
 
   $: open = !!$searchStore?.media
 
-  $: searchResGenerator = !!$searchStore?.media && extensions.getResultsFromExtensions({ media: $searchStore.media, episode: $searchStore.episode, resolution: $settings.searchQuality })
+  $: searchResGenerator = !!$searchStore?.media && extensions.torrentResults({ media: $searchStore.media, episode: $searchStore.episode, resolution: $settings.searchQuality })
 
   $: searchResult = searchResGenerator && processResults(searchResGenerator)
 
   let concatResults: StreamedTorrentResult[] = []
   let errors: ExtensionError[] = []
 
-  async function processResults (iterable: ReturnType<typeof extensions.getResultsFromExtensions>) {
+  async function processResults (iterable: ReturnType<typeof extensions.torrentResults>) {
     concatResults = errors = []
     for await (const { results, error } of iterable) {
       if (iterable !== searchResGenerator) return { results: [], errors: [] }

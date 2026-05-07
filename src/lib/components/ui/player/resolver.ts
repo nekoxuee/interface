@@ -228,8 +228,8 @@ const AnimeResolver = new class AnimeResolver {
       return titleObjects
     }).flat()
 
-    for (const chunk of chunks(titleObjects, 60)) {
-      // single title has a complexity of 8.1, al limits complexity to 500, so this can be at most 62, undercut it to 60, al pagination is 50, but at most we'll do 30 titles since isAduld duplicates each title
+    for (const chunk of chunks(titleObjects, 24)) {
+      // single title has a complexity of 17, al limits complexity to 500, so this can be at most 24
       for (const [key, media] of await client.searchCompound(chunk)) {
         if (media?.id) this.animeNameCache[key] = media.id
       }

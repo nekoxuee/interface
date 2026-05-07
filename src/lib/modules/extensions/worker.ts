@@ -3,7 +3,7 @@ import { expose } from 'abslink/w3c'
 
 import SUPPORTS from '../settings/supports'
 
-import type { NZBorURLSource, SearchFunction, SearchOptions, TorrentQuery, TorrentSource } from './types'
+import type { NZBQuery, SearchOptions, AnimeQuery, TorrentResult, TorrentSource, NZBSource, SubtitleSource } from './types'
 
 const _fetch = SUPPORTS.isIOS
   ? (input: RequestInfo | URL, init?: RequestInit) => {
@@ -18,53 +18,65 @@ const _fetch = SUPPORTS.isIOS
     }
   : fetch
 
-export default expose({
-  mod: null as unknown as Promise<(TorrentSource | NZBorURLSource) & { url: string }>,
+// this entire file is a shitstorm, this needs to be written better
+type LoadedExtension<TSource extends TorrentSource | NZBSource | SubtitleSource> = TSource & { url: string }
+
+export class ExtensionWorker<TSource extends TorrentSource | NZBSource | SubtitleSource = TorrentSource | NZBSource | SubtitleSource> {
+  mod = null as unknown as Promise<LoadedExtension<TSource>>
+
   construct (code: string) {
     this.mod = this.load(code)
-  },
+  }
 
-  async load (code: string): Promise<(TorrentSource | NZBorURLSource) & { url: string }> {
+  async load (code: string): Promise<LoadedExtension<TSource>> {
     // WARN: unsafe eval
     const url = URL.createObjectURL(new Blob([code], { type: 'application/javascript' }))
     const module = await import(/* @vite-ignore */url)
     URL.revokeObjectURL(url)
     return module.default
-  },
+  }
 
   async loaded () {
     await this.mod
-  },
+  }
 
   [finalizer] () {
     console.log('destroyed worker', self.name)
     self.close()
-  },
+  }
 
   async url () {
     return (await this.mod).url
-  },
+  }
 
-  async single (query: TorrentQuery, options?: SearchOptions): ReturnType<SearchFunction> {
+  async single (
+    query: TSource extends NZBSource ? NZBQuery<{ file: string }> : Omit<AnimeQuery, 'resolution' | 'exclusions'>,
+    options?: SearchOptions
+  ): Promise<TSource extends NZBSource ? string : TSource extends SubtitleSource ? Array<{url: string, language: string}> : TorrentResult[]> {
     const queryWithFetch = { ...query, fetch: _fetch }
-    return await ((await this.mod) as TorrentSource).single(queryWithFetch, options)
-  },
 
-  async batch (query: TorrentQuery, options?: SearchOptions): ReturnType<SearchFunction> {
+    // @ts-expect-error w/e cba
+    return await (await this.mod).single(queryWithFetch, options)
+  }
+
+  async batch (
+    query: TSource extends NZBSource ? NZBQuery<{ files: string[], name: string }> : AnimeQuery,
+    options?: SearchOptions
+  ): Promise<TSource extends NZBSource ? string : TSource extends SubtitleSource ? never : TorrentResult[]> {
     const queryWithFetch = { ...query, fetch: _fetch }
-    return await ((await this.mod) as TorrentSource).batch(queryWithFetch, options)
-  },
 
-  async movie (query: TorrentQuery, options?: SearchOptions): ReturnType<SearchFunction> {
+    // @ts-expect-error w/e cba
+    return await (await this.mod).batch(queryWithFetch, options)
+  }
+
+  async movie (query: AnimeQuery, options?: SearchOptions) {
     const queryWithFetch = { ...query, fetch: _fetch }
-    return await ((await this.mod) as TorrentSource).movie(queryWithFetch, options)
-  },
-
-  async query (hash: string, options?: SearchOptions) {
-    return await ((await this.mod) as NZBorURLSource).query(hash, options, _fetch)
-  },
+    return await (await this.mod as unknown as TorrentSource).movie(queryWithFetch, options)
+  }
 
   async test () {
     return await (await this.mod).test()
   }
-})
+}
+
+export default expose(new ExtensionWorker())

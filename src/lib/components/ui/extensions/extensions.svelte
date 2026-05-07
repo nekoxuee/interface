@@ -12,13 +12,13 @@
   import { Input } from '$lib/components/ui/input'
   import * as Tabs from '$lib/components/ui/tabs'
   import * as Tooltip from '$lib/components/ui/tooltip'
-  import { savedConfigs, storage } from '$lib/modules/extensions'
+  import { MANIFEST_VERSION, savedConfigs, storage } from '$lib/modules/extensions'
   import { codeToEmoji } from '$lib/utils'
 
   const typeMap = {
     nzb: 'NZB',
     torrent: 'Torrent',
-    url: 'URL'
+    subtitle: 'Subtitle'
   }
   let value = 'extensions'
 
@@ -50,8 +50,29 @@
       <Tabs.Trigger tabindex={0} value='repositories'>Repositories</Tabs.Trigger>
     </Tabs.List>
   </div>
-  <Tabs.Content value='extensions' tabindex={-1}>
-    <div class='flex flex-col gap-y-2 justify-center py-3'>
+  <div class='gap-3 flex py-3 sm:flex-row flex-col'>
+    <Tooltip.Root>
+      <Tooltip.Trigger class='w-full' tabindex={-1}>
+        <Input class='bg-neutral-950 border-none' type='url' placeholder='https://example.com/manifest.json' bind:value={extensionInput} />
+      </Tooltip.Trigger>
+      <Tooltip.Content class='max-w-full w-52'>
+        Destination URL of the extension manifest to import extensions from. This can be a direct URL to a .json file, an npm package prefixed with npm:, a file in a github repository prefixed with gh: or a file with the file: prefix and the code inlined as text.
+      </Tooltip.Content>
+    </Tooltip.Root>
+    {#await importPromise}
+      <Button class='font-bold flex items-center justify-center w-full sm:w-56 max-w-full shrink-0 !pointer-events-auto cursor-wait' disabled size='default'>
+        <Plus size={iconSizes.lg} class='mr-2' />
+        Importing extensions....
+      </Button>
+    {:then _}
+      <Button class='font-bold flex items-center justify-center w-full sm:w-56 max-w-full shrink-0' size='default' on:click={() => importExtension()}>
+        <Plus size={iconSizes.lg} class='mr-2' />
+        Import Extensions
+      </Button>
+    {/await}
+  </div>
+  <Tabs.Content value='extensions' class='mt-0' tabindex={-1}>
+    <div class='flex flex-col gap-y-2 justify-center'>
       {#each Object.entries($savedConfigs) as [id, config] (id)}
         <div class='bg-neutral-950 px-4 py-3 rounded-md flex flex-row space-x-3 justify-between w-full'>
           <div class='flex flex-col space-y-3'>
@@ -105,6 +126,15 @@
               </div>
             </div>
             <div class='flex-wrap w-full justify-start gap-2 flex text-neutral-300 text-sm'>
+              {#if config.deprecated}
+                <div class='rounded px-3 py-0.5 font-bold bg-yellow-800 leading-snug'>
+                  Deprecated
+                </div>
+              {:else if config.manifestVersion !== MANIFEST_VERSION}
+                <div class='rounded px-3 py-0.5 font-bold bg-red-900 leading-snug'>
+                  Outdated
+                </div>
+              {/if}
               <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug'>
                 {config.version}
               </div>
@@ -139,35 +169,14 @@
             Looks like there's nothing here...
           </div>
           <div class='text-sm text-muted-foreground'>
-            Import some extensions in the Repositories tab.
+            Import some extensions.
           </div>
         </div>
       {/each}
     </div>
   </Tabs.Content>
-  <Tabs.Content value='repositories' tabindex={-1}>
-    <div class='gap-3 flex py-3 sm:flex-row flex-col'>
-      <Tooltip.Root>
-        <Tooltip.Trigger class='w-full' tabindex={-1}>
-          <Input class='bg-neutral-950 border-none' type='url' placeholder='https://example.com/manifest.json' bind:value={extensionInput} />
-        </Tooltip.Trigger>
-        <Tooltip.Content class='max-w-full w-52'>
-          Destination URL of the extension manifest to import extensions from. This can be a direct URL to a .json file, an npm package prefixed with npm:, a file in a github repository prefixed with gh: or a file with the file: prefix and the code inlined as text.
-        </Tooltip.Content>
-      </Tooltip.Root>
-      {#await importPromise}
-        <Button class='font-bold flex items-center justify-center w-full sm:w-56 max-w-full shrink-0 !pointer-events-auto cursor-wait' disabled size='default'>
-          <Plus size={iconSizes.lg} class='mr-2' />
-          Importing extensions....
-        </Button>
-      {:then _}
-        <Button class='font-bold flex items-center justify-center w-full sm:w-56 max-w-full shrink-0' size='default' on:click={() => importExtension()}>
-          <Plus size={iconSizes.lg} class='mr-2' />
-          Import Extensions
-        </Button>
-      {/await}
-    </div>
-    <div class='flex flex-col gap-y-2 justify-center py-3'>
+  <Tabs.Content value='repositories' class='mt-0' tabindex={-1}>
+    <div class='flex flex-col gap-y-2 justify-center'>
       {#each Object.entries(Object.groupBy(Object.values($savedConfigs), saved => saved.update ?? '')) as [id, extensions] (id) }
         {@const url = new URL(id)}
         <div class='bg-neutral-950 px-4 py-3 rounded-md flex flex-row space-x-3 justify-between items-center w-full'>

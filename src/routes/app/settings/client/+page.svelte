@@ -95,6 +95,6 @@
 <SettingCard let:id title='Connection Port' description='The port used to connect to your NZB provider. 119 is the default for NNTP.'>
   <Input type='number' inputmode='numeric' pattern='[0-9]*' step='1' bind:value={$settings.nzbPort} {id} placeholder='119' class='w-32 shrink-0 bg-background' />
 </SettingCard>
-<SettingCard let:id title='Connection Pool Size' description={'The number of simultaneous connections to use for downloading from your NZB provider. Higher values might increase download speeds but can cause issues with some providers if set too high.\n\nThis is per extension, so if you have multiple NZB extensions configured, each will use up to this many connections.'}>
+<SettingCard let:id title='Connection Pool Size' description={'The number of simultaneous connections to use for downloading from your NZB provider. Higher values might increase download speeds but can cause issues with some providers if set too high.\n\nThis is shared between extension, so if you have multiple NZB extensions configured they will share the same pool of connections.'}>
   <Input type='number' inputmode='numeric' pattern='[0-9]*' step='1' bind:value={$settings.nzbPoolSize} {id} placeholder='5' class='w-32 shrink-0 bg-background' />
 </SettingCard>

@@ -50,18 +50,16 @@
 <Progress />
 
 <div class='space-y-3 lg:max-w-4xl pt-5 h-full overflow-y-auto' use:dragScroll>
-  {#if !SUPPORTS.isIOS}
-    <SettingCard class='bg-transparent' let:id title='Torrent Download Location' description={`Path to the folder used to store torrents. By default this is the OS's TEMP/TMP cache folder, which might lose data when your OS tries to reclaim storage.${SUPPORTS.isAndroid ? '\n\nSD Card saves to the Cards Download folder. If SD Card is not available torrents will automatically be saved to the Phone\'s Downloads folder' : ''}`}>
-      <div class='flex'>
-        <Input type='url' bind:value={$settings.torrentPath} readonly {id} placeholder='/tmp/webtorrent' class='sm:w-60 bg-background rounded-r-none pointer-events-none' />
-        {#if !SUPPORTS.isAndroid}
-          <Button class='rounded-l-none font-bold' on:click={() => selectDownloadFolder()} variant='secondary'>Select Folder</Button>
-        {:else}
-          <SingleCombo bind:value={$settings.androidStorageType} items={androidDirectories} class='w-32 shrink-0 border-input border rounded-l-none ' onSelected={selectDownloadFolder} />
-        {/if}
-      </div>
-    </SettingCard>
-  {/if}
+  <SettingCard class='bg-transparent' let:id title='Torrent Download Location' description={`Path to the folder used to store torrents. By default this is the OS's TEMP/TMP cache folder, which might lose data when your OS tries to reclaim storage.${SUPPORTS.isAndroid ? '\n\nSD Card saves to the Cards Download folder. If SD Card is not available torrents will automatically be saved to the Phone\'s Downloads folder' : ''}`}>
+    <div class='flex'>
+      <Input type='url' bind:value={$settings.torrentPath} readonly {id} placeholder='/tmp/webtorrent' class='sm:w-60 bg-background rounded-r-none pointer-events-none' />
+      {#if !SUPPORTS.isAndroid && !SUPPORTS.isIOS}
+        <Button class='rounded-l-none font-bold' on:click={() => selectDownloadFolder()} variant='secondary'>Select Folder</Button>
+      {:else}
+        <SingleCombo bind:value={$settings.androidStorageType} items={androidDirectories} class='w-32 shrink-0 border-input border rounded-l-none ' onSelected={selectDownloadFolder} />
+      {/if}
+    </div>
+  </SettingCard>
   <SettingCard class='bg-transparent' let:id title='Persist Files' description="Keeps torrents files instead of deleting them after a new torrent is played. This doesn't seed the files, only keeps them on your drive. This will quickly fill up your storage.">
     <Switch {id} bind:checked={$settings.torrentPersist} />
   </SettingCard>

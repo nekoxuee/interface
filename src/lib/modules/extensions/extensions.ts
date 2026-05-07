@@ -9,13 +9,15 @@ import { settings, type videoResolutions } from '../settings'
 
 import { storage } from './storage'
 
-import type { TorrentResult } from './types'
+import type { NZBSource, TorrentResult, TorrentSource, SubtitleSource } from './types'
+import type { ExtensionWorker } from './worker'
 import type { EpisodesResponse, Titles, Episode } from '../anizip/types'
+import type { Remote } from 'abslink'
 import type { AnitomyResult } from 'anitomyscript'
 
 import { dev } from '$app/environment'
 import { savedOptions as extensionOptions, savedConfigs } from '$lib/modules/extensions'
-import { anitomyscript } from '$lib/utils'
+import { anitomyscript, toSettled } from '$lib/utils'
 
 const exclusions: string[] = []
 
@@ -56,6 +58,8 @@ export class ExtensionError extends Error {
     this.extension = extension
   }
 }
+
+export const MANIFEST_VERSION = 2
 
 export type StreamedTorrentResult = TorrentResult & { extension: Set<string>, parseObject: AnitomyResult }
 
@@ -186,28 +190,13 @@ export const extensions = new class Extensions {
     return titles
   }
 
-  async * getResultsFromExtensions ({ media, episode, resolution }: { media: Media, episode: number, resolution: keyof typeof videoResolutions }) {
-    debug(`Fetching results for ${media.id}:${media.title?.userPreferred} ${episode} ${resolution}`)
-    await storage.ready
-    const extensions = storage.codeManager.extensions
-    if (!extensions.size) {
-      debug('No torrent sources configured')
-      throw new Error('No torrent sources configured. Add extensions in settings.')
-    }
-
-    const movie = isMovie(media)
-    const singleEp = isSingleEpisode(media)
-
-    debug(`Fetching sources for ${media.id}:${media.title?.userPreferred} ${episode} ${movie} ${resolution}`)
-
-    const aniDBMeta = await this.ALToAniDB(media)
+  async _getQueryOptions (media: Media, episode: number) {
+    const aniDBMeta = await this._ALToAniDB(media)
     const { anidb_id: anidbAid, mal_id: malId, themoviedb_id: tmdbId, kitsu_id: kitsuId, thetvdb_id: tvdbId, imdb_id: imdbId } = aniDBMeta?.mappings ?? {}
-    const { anidbEid, tvdbId: tvdbEId, absoluteEpisodeNumber } = (anidbAid && await this.ALtoAniDBEpisode({ media, episode }, aniDBMeta)) || {}
+    const { anidbEid, tvdbId: tvdbEId, absoluteEpisodeNumber } = (anidbAid && makeEpisodeList(media, aniDBMeta)[episode - 1]) || {}
     debug(`AniDB Mapping: ${anidbAid} ${anidbEid}`)
 
-    const _settings = get(settings)
-
-    const options = {
+    return {
       anilistId: media.id,
       episodeCount: episodes(media),
       episode,
@@ -221,7 +210,28 @@ export const extensions = new class Extensions {
       imdbId,
       media,
       absoluteEpisodeNumber,
-      titles: this.createTitles(media),
+      titles: this.createTitles(media)
+    }
+  }
+
+  async * torrentResults ({ media, episode, resolution }: { media: Media, episode: number, resolution: keyof typeof videoResolutions }) {
+    debug(`Fetching results for ${media.id}:${media.title?.userPreferred} ${episode} ${resolution}`)
+    await storage.ready
+    const extensions = storage.codeManager.extensions as Map<string, Remote<ExtensionWorker<TorrentSource>>>
+    if (!extensions.size) {
+      debug('No torrent sources configured')
+      throw new Error('No torrent sources configured. Add extensions in settings.')
+    }
+
+    const movie = isMovie(media)
+    const singleEp = isSingleEpisode(media)
+
+    debug(`Fetching sources for ${media.id}:${media.title?.userPreferred} ${episode} ${movie} ${resolution}`)
+
+    const _settings = get(settings)
+
+    const options = {
+      ...await this._getQueryOptions(media, episode),
       resolution,
       exclusions: _settings.enableExternal || _settings.bunnyPlayer ? [] : exclusions
     }
@@ -254,13 +264,13 @@ export const extensions = new class Extensions {
       const extOptions = extopts[id].options
       const shouldUpdatePeers = configs[id].updatePeers ?? true
 
-      const createTask = (fn: typeof worker.single) =>
+      const createTask = (fn: typeof worker.single | typeof worker.movie | typeof worker.batch) =>
         tasks.push(raceWithHandler(
           fn(options, extOptions),
 
           async value => {
             const vals = navigator.onLine && shouldUpdatePeers && value.length
-              ? await raceTimeout(this.updatePeerCounts(value)) ?? value
+              ? await raceTimeout(this._updatePeerCounts(value)) ?? value
               : value
 
             return { results: await parseResults(vals.map(v => ({ ...v, extension: new Set([id]), parseObject: {} as unknown as AnitomyResult }))) }
@@ -297,27 +307,29 @@ export const extensions = new class Extensions {
     debug(`Finished streaming ${totalResults} results, online ${navigator.onLine}`)
   }
 
-  async getNZBResultsFromExtensions (hash: string) {
+  async nzbQuery (hash: string, media: Media, episode: number, fileInfo: string | string[], name: string) {
+    // swallows timeouts, shows actual errors
     await storage.ready
-    const extensions = storage.codeManager.extensions
-    const results: string[] = []
-    const errors: Array<{ error: Error, extension: string }> = []
 
     const extopts = get(extensionOptions)
     const configs = get(savedConfigs)
 
-    for (const [id, worker] of extensions.entries()) {
-      const thisExtOpts = extopts[id]!
-      if (!thisExtOpts.enabled) continue
-      if (configs[id]!.type !== 'nzb') continue
+    const extensions = storage.codeManager.extensions as Map<string, Remote<ExtensionWorker<NZBSource>>>
+
+    const options = await this._getQueryOptions(media, episode)
+
+    const { settled, errors } = await toSettled<ExtensionError, string | undefined>(extensions.entries().map(async ([id, worker]) => {
+      if (!extopts[id]?.enabled || configs[id]?.type !== 'nzb') return
       try {
-        const nzb = await worker.query(hash, thisExtOpts.options)
-        if (!nzb) continue
-        results.push(nzb)
+        return await raceTimeout(
+          Array.isArray(fileInfo)
+            ? worker.batch({ ...options, hash, files: fileInfo, name }, extopts[id].options)
+            : worker.single({ ...options, hash, file: fileInfo, name }, extopts[id].options)
+          , 10_000)
       } catch (error) {
-        errors.push({ error: error as Error, extension: id })
+        throw new ExtensionError(error as Error, id)
       }
-    }
+    }))
 
     if (errors.length) {
       for (const { error, extension } of errors) {
@@ -325,12 +337,40 @@ export const extensions = new class Extensions {
       }
     }
 
-    return results
+    return settled.filter((nzb): nzb is string => !!nzb)
+  }
+
+  async subtitlesQuery (media: Media, episode: number) {
+    await storage.ready
+
+    const extopts = get(extensionOptions)
+    const configs = get(savedConfigs)
+
+    const extensions = storage.codeManager.extensions as Map<string, Remote<ExtensionWorker<SubtitleSource>>>
+
+    const options = await this._getQueryOptions(media, episode)
+
+    const { settled, errors } = await toSettled<ExtensionError, Array<{ url: string, language: string }> | undefined>(extensions.entries().map(async ([id, worker]) => {
+      if (!extopts[id]?.enabled || configs[id]?.type !== 'subtitle') return
+      try {
+        return await raceTimeout(worker.single(options, extopts[id].options), 10_000)
+      } catch (error) {
+        throw new ExtensionError(error as Error, id)
+      }
+    }))
+
+    if (errors.length) {
+      for (const { error, extension } of errors) {
+        toast.error(`Error fetching subtitles from ${configs[extension]?.name ?? extension}`, { description: error.message })
+      }
+    }
+
+    return settled.filter((subtitles) => !!subtitles).flat()
   }
 
   _scrapeCache = new Map<string, { hash: string, complete: string, downloaded: string, incomplete: string }>()
 
-  async updatePeerCounts <T extends TorrentResult[]> (entries: T): Promise<T> {
+  async _updatePeerCounts <T extends TorrentResult[]> (entries: T): Promise<T> {
     debug(`Updating peer counts for ${entries.length} entries`)
 
     try {
@@ -356,7 +396,7 @@ export const extensions = new class Extensions {
     return entries
   }
 
-  async ALToAniDB (media: Media) {
+  async _ALToAniDB (media: Media) {
     const json = await _episodes(media.id)
     if (json?.mappings?.anidb_id) return json
 
@@ -364,10 +404,6 @@ export const extensions = new class Extensions {
     if (!parentID) return
 
     return await _episodes(parentID)
-  }
-
-  async ALtoAniDBEpisode ({ media, episode }: {media: Media, episode: number}, episodesRes?: EpisodesResponse | null) {
-    return makeEpisodeList(media, episodesRes)[episode - 1] ?? undefined
   }
 
   dedupe <T extends TorrentResult & { extension: Set<string> }> (entries: T[]): T[] {

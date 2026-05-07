@@ -113,17 +113,19 @@ export const server = new class ServerClient {
     const hash = result.files[0]!.hash
     if (get(this.last)?.id === id) this.last.set({ id: hash, media, episode })
     this.downloaded.value.add(hash)
-    this._addNZBs(hash)
+    this._addNZBs(hash, media, episode, result.files.map(({ name }) => name))
     return result
   }
 
-  async _addNZBs (hash: string) {
+  async _addNZBs (hash: string, media: Media, episode: number, fileInfo: string | string[]) {
     const set = get(settings)
     if (!set.nzbDomain || !set.nzbLogin || !set.nzbPassword || !set.nzbPort || !set.nzbPoolSize) return
 
-    for (const nzb of await extensions.getNZBResultsFromExtensions(hash)) {
+    const { name } = await native.torrentInfo(hash)
+
+    for (const nzb of await extensions.nzbQuery(hash, media, episode, fileInfo, name)) {
       try {
-        await native.createNZB(hash, nzb, set.nzbDomain, Math.trunc(set.nzbPort), set.nzbLogin, set.nzbPassword, Math.trunc(set.nzbPoolSize))
+        await native.createNZB(hash, nzb)
       } catch (e) {
         toast.error('Failed to add NZB', { description: (e as Error).message })
       }

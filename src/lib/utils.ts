@@ -356,7 +356,7 @@ export function transferToFileList (e: { dataTransfer?: DataTransfer | null, cli
   return Promise.all(promises)
 }
 
-export async function toSettled<U extends Error, T> (promises: Array<Promise<T>>): Promise<{ settled: T[], errors: U[] }> {
+export async function toSettled<U extends Error, T> (promises: Iterable<Promise<T>>): Promise<{ settled: T[], errors: U[] }> {
   const settled: T[] = []
   const errors: U[] = []
   for (const settle of await Promise.allSettled(promises)) {

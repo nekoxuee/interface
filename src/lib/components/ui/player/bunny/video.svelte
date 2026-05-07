@@ -28,7 +28,7 @@
   import audioWorkletUrl from './audioWorklet.ts?worker&url'
 
   import type { Track } from '../../../../../app'
-  import type { ResolvedFile } from '../resolver'
+  import type { MediaInfo } from '../util'
   import type { TorrentFile } from 'native'
   import type { SvelteMediaTimeRange } from 'svelte/elements'
 
@@ -124,7 +124,7 @@
   export let videoTracks: Track[] = []
 
   export let canvasSource: CanvasImageSource
-  export let current: ResolvedFile
+  export let current: MediaInfo
   export let otherFiles: TorrentFile[] = []
 
   $: ended = duration > 0 && currentTime >= duration

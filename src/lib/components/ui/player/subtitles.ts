@@ -6,9 +6,11 @@ import { writable } from 'simple-store-svelte'
 import { get } from 'svelte/store'
 
 import type { ResolvedFile } from './resolver'
+import type { MediaInfo } from './util'
 import type { ASSEvent, ASSStyle } from 'jassub/dist/worker/util'
 import type { TorrentFile } from 'native'
 
+import { extensions } from '$lib/modules/extensions'
 import native from '$lib/modules/native'
 import { type defaults, settings } from '$lib/modules/settings'
 import { fontRx, HashMap, subRx, subtitleExtensions, toTS } from '$lib/utils'
@@ -97,10 +99,10 @@ export default class Subtitles {
 
   _tracks = writable<Record<number | string, { events: HashMap<{ text: string, time: number, duration: number, style?: string }, ASSEvent>, meta: { language?: string, type: string, header: string, number: string, name?: string }, styles: Record<string | number, number> }>>({})
 
-  constructor (video: HTMLVideoElement | undefined, otherFiles: TorrentFile[], selected: ResolvedFile, canvas?: HTMLCanvasElement) {
+  constructor (video: HTMLVideoElement | undefined, otherFiles: TorrentFile[], mediaInfo: MediaInfo, canvas?: HTMLCanvasElement) {
     this.video = video
     this.canvas = canvas
-    this.selected = selected
+    this.selected = mediaInfo.file
     this.fonts = [...otherFiles.filter(file => fontRx.test(file.name)).map(file => file.url)]
 
     this.current.subscribe(value => {
@@ -113,16 +115,22 @@ export default class Subtitles {
 
     const subFiles = otherFiles.filter(({ name }) => subRx.test(name))
 
-    const fetchAndLoad = async (file: TorrentFile) => {
+    const fetchAndLoad = async (file: { url: string, name: string }) => {
       const res = await fetch(file.url)
       const blob = await res.blob()
       await this.addSingleSubtitleFile(new File([blob], file.name))
     }
 
+    extensions.subtitlesQuery(mediaInfo.media, mediaInfo.episode).then(async results => {
+      for (const { url, language } of results) {
+        fetchAndLoad({ url, name: language })
+      }
+    })
+
     if (subFiles.length === 1) {
       fetchAndLoad(subFiles[0]!)
     } else if (subFiles.length > 1) {
-      const videoName = selected.name.substring(0, selected.name.lastIndexOf('.')) || selected.name
+      const videoName = mediaInfo.file.name.substring(0, mediaInfo.file.name.lastIndexOf('.')) || mediaInfo.file.name
       for (const file of subFiles) {
         if (file.name.includes(videoName)) {
           fetchAndLoad(file)

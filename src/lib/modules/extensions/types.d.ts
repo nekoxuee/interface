@@ -11,11 +11,13 @@ export type SearchOptions = Record<string, {
 }>
 
 export interface ExtensionConfig {
+  manifestVersion: number
+  deprecated: boolean
   name: string
   version: string
   description: string
   id: string
-  type: 'torrent' | 'nzb' | 'url'
+  type: 'torrent' | 'nzb' | 'subtitle'
   accuracy: Accuracy
   ratio?: 'perma' | number
   icon: string // URL to the icon
@@ -42,7 +44,7 @@ export interface TorrentResult {
   type?: 'batch' | 'best' | 'alt'
 }
 
-export interface TorrentQuery {
+export interface AnimeQuery {
   media: any // anilist Media object
   anilistId: number // anilist anime id
   anidbAid?: number // anidb anime id
@@ -57,13 +59,19 @@ export interface TorrentQuery {
   absoluteEpisodeNumber?: number
   resolution: '2160' | '1080' | '720' | '540' | '480' | ''
   exclusions: string[] // list of keywords to exclude from searches, this might be unsupported codecs (e.g., "x265"), sources (e.g., "web-dl"), or other keywords (e.g., "uncensored")
-  type?: 'sub' | 'dub'
 }
 
-export type TorrentQueryWithFetch = TorrentQuery & { fetch: typeof fetch }
+export type AnimeQueryWithFetch = AnimeQuery & { fetch: typeof fetch }
 
-export type SearchFunction = (query: TorrentQueryWithFetch, options?: SearchOptions) => Promise<TorrentResult[]>
-export type NZBorURLFunction = (hash: string, options?: SearchOptions) => Promise<string>
+export type NZBQuery<T> = {
+  hash: string
+  name: string
+} & Omit<AnimeQuery, 'resolution' | 'exclusions'> & T
+
+export type NZBQueryWithFetch<T> = NZBQuery<T> & { fetch: typeof fetch }
+
+export type SearchFunction = (query: AnimeQueryWithFetch, options?: SearchOptions) => Promise<TorrentResult[]>
+export type NZBFunction<T> = (query: NZBQueryWithFetch<T>, options?: SearchOptions) => Promise<string>
 
 export class TorrentSource {
   test: () => Promise<boolean>
@@ -72,7 +80,13 @@ export class TorrentSource {
   movie: SearchFunction
 }
 
-export class NZBorURLSource {
+export class NZBSource {
   test: () => Promise<boolean>
-  query: (hash: string, options?: SearchOptions, fetch: typeof fetch) => Promise<string> // accepts btih hash, return URL to NZB or DDL
+  single: NZBFunction<{file: string}>
+  batch: NZBFunction<{files: string[]}>
+}
+
+export class SubtitleSource {
+  test: () => Promise<boolean>
+  single: (query: Omit<AnimeQueryWithFetch, 'resolution' | 'exclusions'>, options?: SearchOptions) => Promise<Array<{url: string, language: string}>>
 }

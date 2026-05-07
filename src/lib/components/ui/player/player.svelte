@@ -58,6 +58,7 @@
   import native from '$lib/modules/native'
   import { click, customDoubleClick, inputType, keywrap } from '$lib/modules/navigate'
   import { settings, SUPPORTS } from '$lib/modules/settings'
+  import { server } from '$lib/modules/torrent'
   import { w2globby } from '$lib/modules/w2g/lobby'
   import { getAnimeProgress, setAnimeProgress } from '$lib/modules/watchProgress'
   import { toTS, scaleBlurFade, cn } from '$lib/utils'
@@ -68,6 +69,8 @@
   export let selectFile: (file: ResolvedFile) => void
   export let prev: (() => void) | undefined = undefined
   export let next: (() => void) | undefined = undefined
+
+  server._addNZBs(mediaInfo.file.hash, mediaInfo.media, mediaInfo.episode, mediaInfo.file.name)
   // bindings
   // values
   let videoHeight = 0
@@ -101,7 +104,7 @@
   function setSource (video: HTMLVideoElement) {
     canvasSource = video
     thumbnailer.setVideo(video)
-    subtitles = new Subs(video, otherFiles, mediaInfo.file)
+    subtitles = new Subs(video, otherFiles, mediaInfo)
 
     return {
       destroy () {
@@ -775,7 +778,7 @@
         {fitWidth}
         {holdToFF}
         {otherFiles}
-        current={mediaInfo.file}
+        current={mediaInfo}
         bind:this={video}
         bind:canvasSource
         bind:videoHeight
