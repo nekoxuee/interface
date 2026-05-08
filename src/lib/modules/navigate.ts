@@ -1,7 +1,5 @@
 import { writable, type Writable } from 'simple-store-svelte'
 
-let lastHoverElement: ((_: boolean) => unknown) | null = null
-
 type InputType = 'mouse' | 'touch' | 'dpad'
 export const inputType: Writable<InputType> = writable('touch')
 
@@ -72,79 +70,85 @@ export function click (node: HTMLElement, cb: (_: Event) => unknown = noop) {
   return { destroy: () => ctrl.abort() }
 }
 
+let lastHoverElement: ((_: boolean) => unknown) | null = null
 /**
  * Adds hover and click event listeners to the specified node.
  */
 export function hover (node: HTMLElement, [cb = noop, hoverUpdate = noop]: [typeof noop, (_: boolean) => void]) {
   const ctrl = new AbortController()
+  function hoverElement () {
+    unhoverLastElement()
+    hoverUpdate(true)
+    lastHoverElement = hoverUpdate
+  }
+  function unhoverLastElement () {
+    lastHoverElement?.(false)
+    hoverUpdate(false)
+    lastHoverElement = null
+  }
+  function clickElement () {
+    if (inputType.value === 'mouse') {
+      unhoverLastElement()
+      cb()
+      return
+    }
+
+    // hover touch
+    if (lastHoverElement === hoverUpdate) {
+      unhoverLastElement()
+      cb()
+    } else {
+      hoverElement()
+    }
+  }
   node.addEventListener('wheel', e => {
+    if (inputType.value !== 'mouse') return
     // cheap way to update hover state on scroll
     // TODO: this is bad on touch, but good on mouse, fix it
     if (document.elementsFromPoint(e.clientX + e.deltaX, e.clientY + e.deltaY).includes(node)) {
-      lastHoverElement?.(false)
-      lastHoverElement = hoverUpdate
-      hoverUpdate(true)
+      hoverElement()
     } else {
-      lastHoverElement?.(false)
-      hoverUpdate(false)
+      unhoverLastElement()
     }
   }, { passive: true, signal: ctrl.signal })
   node.tabIndex = 0
   node.role = 'button'
   node.addEventListener('pointerenter', () => {
-    lastHoverElement?.(false)
-    hoverUpdate(true)
-    if (inputType.value === 'mouse') lastHoverElement = hoverUpdate
+    if (inputType.value === 'touch') return
+    hoverElement()
   }, ctrl)
   node.addEventListener('click', e => {
     e.stopPropagation()
     if (inputType.value === 'dpad') return
-    if (inputType.value === 'mouse') return cb()
-    if (lastHoverElement === hoverUpdate) {
-      lastHoverElement = null
-      // navigator.vibrate(15)
-      hoverUpdate(false)
-      cb()
-    } else {
-      lastHoverElement?.(false)
-      lastHoverElement = hoverUpdate
-    }
+    clickElement()
   }, ctrl)
   node.addEventListener('keydown', (e: KeyboardEvent) => {
-    if (e.key === 'Enter' && inputType.value === 'dpad') {
+    if (inputType.value !== 'dpad') return
+    if (e.key === 'Enter') {
       e.stopPropagation()
-      lastHoverElement?.(false)
-      if (lastHoverElement === hoverUpdate) {
-        lastHoverElement = null
-        hoverUpdate(false)
-        cb()
-      } else {
-        lastHoverElement?.(false)
-        hoverUpdate(true)
-        lastHoverElement = hoverUpdate
-      }
+      clickElement()
     }
   }, ctrl)
   node.addEventListener('pointerleave', () => {
-    if (inputType.value !== 'touch') {
-      lastHoverElement?.(false)
-      hoverUpdate(false)
-      lastHoverElement = null
-    }
+    if (inputType.value === 'touch') return
+    unhoverLastElement()
+  }, ctrl)
+  node.addEventListener('pointercancel', () => {
+    unhoverLastElement()
   }, ctrl)
   node.addEventListener('pointermove', (e) => {
-    if (inputType.value === 'touch' && Math.abs(e.movementY) > 0) {
-      lastHoverElement?.(false)
-      hoverUpdate(false)
-      lastHoverElement = null
+    if (inputType.value !== 'touch') return
+    if (Math.abs(e.movementY) > 0) {
+      unhoverLastElement()
     }
   }, ctrl)
   node.addEventListener('drag', () => {
-    if (inputType.value === 'mouse') {
-      lastHoverElement?.(false)
-      hoverUpdate(false)
-      lastHoverElement = null
-    }
+    if (inputType.value === 'mouse') return
+    unhoverLastElement()
+  }, ctrl)
+  node.addEventListener('contextmenu', e => {
+    e.preventDefault()
+    clickElement()
   }, ctrl)
 
   return { destroy: () => ctrl.abort() }
