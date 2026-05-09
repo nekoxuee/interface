@@ -121,7 +121,9 @@ export const server = new class ServerClient {
     const set = get(settings)
     if (!set.nzbDomain || !set.nzbLogin || !set.nzbPassword || !set.nzbPort || !set.nzbPoolSize) return
 
-    const { name } = await native.torrentInfo(hash)
+    const { name, progress } = await native.torrentInfo(hash)
+
+    if (progress === 1) return
 
     for (const nzb of await extensions.nzbQuery(hash, media, episode, fileInfo, name)) {
       try {
