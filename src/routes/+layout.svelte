@@ -17,8 +17,6 @@
   import { settings, SUPPORTS } from '$lib/modules/settings'
   import { cn } from '$lib/utils'
 
-  let root: HTMLDivElement
-
   native.errors(error => {
     toast.error('Torrent Process Error!', { description: error?.stack ?? error?.message })
     console.error(error)
@@ -42,13 +40,15 @@
       })
     })
   })
+
+  $: scale = SUPPORTS.isAndroidTV ? $settings.uiScale / devicePixelRatio : (SUPPORTS.isAndroid || SUPPORTS.isIOS) ? $settings.uiScale : 1
 </script>
 
 <svelte:head>
-  <meta name='viewport' content='width=device-width, initial-scale={SUPPORTS.isAndroidTV ? $settings.uiScale / devicePixelRatio : (SUPPORTS.isAndroid || SUPPORTS.isIOS) ? $settings.uiScale : 1}, maximum-scale=2, user-scalable=0, viewport-fit=cover' />
+  <meta name='viewport' content='width={scale <= 1 ? 'device-width' : 1}, initial-scale={scale}, minimum-scale={scale}, maximum-scale={scale}, user-scalable=no, viewport-fit=cover' />
 </svelte:head>
 
-<div class={cn('size-full flex flex-col backface-hidden bg-black relative overflow-clip')} bind:this={root} id='root' data-input={$inputType}>
+<div class={cn('size-full flex flex-col backface-hidden bg-black relative overflow-clip')} id='root' data-input={$inputType}>
   <ProgressBar zIndex={100} bind:complete {displayThresholdMs} />
   <Toaster position='top-right' expand={true} />
 
