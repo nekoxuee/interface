@@ -4,7 +4,7 @@ import { readable } from 'simple-store-svelte'
 import { cubicOut } from 'svelte/easing'
 import { twMerge } from 'tailwind-merge'
 
-import { SUPPORTS } from './modules/settings'
+import SUPPORTS from './modules/settings/supports'
 
 import type { TransitionConfig } from 'svelte/transition'
 

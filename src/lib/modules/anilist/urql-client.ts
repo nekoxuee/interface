@@ -1,75 +1,53 @@
 import { authExchange } from '@urql/exchange-auth'
 import { offlineExchange } from '@urql/exchange-graphcache'
+import { makeDefaultStorage } from '@urql/exchange-graphcache/default-storage'
+import { refocusExchange } from '@urql/exchange-refocus'
 import { Client, fetchExchange } from '@urql/svelte'
 import Bottleneck from 'bottleneck'
 import Debug from 'debug'
 import { writable } from 'simple-store-svelte'
 import { get } from 'svelte/store'
-import { toast } from 'svelte-sonner'
 
 import { anilistClientID } from '../settings'
 
 import { cacheOnErrorExchange } from './error'
 import gql from './gql'
 import { CommentFrag, UpdateUser, type Entry, FullMedia, FullMediaList, ThreadFrag, type ToggleFavourite, UserLists, Viewer } from './queries'
-import { refocusExchange } from './refocus'
+import { retryExchange } from './retry'
 import schema from './schema.json' with { type: 'json' }
-import { makeDefaultStorage } from './storage'
 
 import type { ResultOf } from 'gql.tada'
 
 import native from '$lib/modules/native'
-import { safeLocalStorage, sleep } from '$lib/utils'
+import { safeLocalStorage } from '$lib/utils'
 
 const debug = Debug('ui:urql')
 
 interface ViewerData { viewer: ResultOf<typeof Viewer>['Viewer'], token: string, expires: string }
-
-class FetchError extends Error {
-  res
-
-  constructor (res: Response, message?: string, opts?: ErrorOptions) {
-    super(message, opts)
-    this.res = res
-  }
-}
 
 // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
 export const storagePromise = Promise.withResolvers<void>()
 export const storage = makeDefaultStorage({
   idbName: 'anilist-cache-v1',
   onCacheHydrated: () => storagePromise.resolve(),
-  maxAge: 14 // The maximum age of the persisted data in days
+  maxAge: 21 // The maximum age of the persisted data in days
 })
 
 indexedDB.deleteDatabase('graphcache-v3') // old version
 
 debug('Loading urql client')
-storagePromise.promise.finally(() => {
-  debug('Graphcache storage initialized')
-})
+storagePromise.promise.finally(() => debug('Graphcache storage initialized'))
 
 export default new class URQLClient extends Client {
   limiter = new Bottleneck({
-    reservoir: 90,
-    reservoirRefreshAmount: 90,
-    reservoirRefreshInterval: 60 * 1000,
-    maxConcurrent: 3,
-    minTime: 200
+    reservoir: 30,
+    reservoirRefreshAmount: 30,
+    reservoirRefreshInterval: 60_000,
+    maxConcurrent: 10,
+    minTime: 100
   })
 
-  rateLimitPromise: Promise<void> | null = null
-
-  handleRequest = this.limiter.wrap<Response, RequestInfo | URL, RequestInit | undefined>(async (req: RequestInfo | URL, opts?: RequestInit) => {
-    await this.rateLimitPromise
-    // await sleep(1000)
-    const res = await fetch(req, opts)
-    if (!res.ok && (res.status === 429 || res.status === 500)) {
-      debug('Rate limit exceeded', res)
-      throw new FetchError(res)
-    }
-    return res
-  })
+  handleRequest = this.limiter.wrap<Response, RequestInfo | URL, RequestInit | undefined>(fetch)
 
   async token () {
     debug('Requesting Anilist token')
@@ -103,23 +81,15 @@ export default new class URQLClient extends Client {
     native.restart()
   }
 
-  setRateLimit (sec: number) {
-    debug('Setting rate limit', sec)
-    toast.error('Anilist Error', { description: 'Rate limit exceeded, retrying in ' + Math.round(sec / 1000) + ' seconds.' })
-    this.rateLimitPromise ??= sleep(sec).then(() => { this.rateLimitPromise = null })
-    return sec
-  }
-
   viewer = writable<ViewerData | undefined>(safeLocalStorage('ALViewer'))
 
   constructor () {
     super({
       url: 'https://graphql.anilist.co',
       preferGetMethod: false,
-      // fetch: dev ? fetch : (req: RequestInfo | URL, opts?: RequestInit) => this.handleRequest(req, opts),
       fetch: (req: RequestInfo | URL, opts?: RequestInit) => this.handleRequest(req, opts),
       exchanges: [
-        refocusExchange(60_000),
+        refocusExchange({ minimumTime: 60_000 }),
         cacheOnErrorExchange(),
         offlineExchange({
           schema,
@@ -327,26 +297,15 @@ export default new class URQLClient extends Client {
             }
           }
         }),
+        retryExchange({
+          initialDelayMs: 100,
+          maxDelayMs: 60_000,
+          randomDelay: false,
+          maxNumberAttempts: Infinity
+        }),
         fetchExchange
       ],
       requestPolicy: 'cache-and-network'
-    })
-
-    this.limiter.on('failed', async (error: FetchError | Error, jobInfo) => {
-      debug('Bottleneck onfailed', error, jobInfo.options, jobInfo.retryCount, jobInfo.args[0], jobInfo.args[1]?.body)
-      // urql has some weird bug that first error is always an AbortError ???
-      if (error.name === 'AbortError') return undefined
-      if (jobInfo.retryCount > 8) return undefined
-
-      if (error.message === 'Failed to fetch') return this.setRateLimit(10_000)
-      if (!(error instanceof FetchError)) return 0
-      if (error.res.status === 500) return 1000
-
-      const delay = (parseInt(error.res.headers.get('retry-after') ?? '10') + 1) * 1000
-
-      debug('Setting rate limit for', error.res.status, delay)
-
-      return this.setRateLimit(delay)
     })
   }
 }()

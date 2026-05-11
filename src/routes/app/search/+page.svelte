@@ -113,18 +113,10 @@
     }
     inputText = ''
     pageNumber = 1
-    for (const unsub of subscriptions) {
-      unsub()
-    }
-    subscriptions = []
     trace = undefined
   }
 
   let media: Array<ReturnType<typeof client.search>> = []
-
-  // these are required, because #each key re-renders when the array changes, this doesnt repaint the ui, but re-triggers any active subscriptions
-  // and this re-runs the anilist queries as
-  let subscriptions: Array<() => void> = []
 
   onDestroy(clear)
 
@@ -151,10 +143,7 @@
 
     tick().then(() => replaceState('', { search }))
 
-    const query = client.search(search)
-
-    subscriptions.push(query.subscribe(() => {}))
-    return query
+    return client.search(search)
   }
 
   const updateText = debounce((e: FormInputEvent) => {
