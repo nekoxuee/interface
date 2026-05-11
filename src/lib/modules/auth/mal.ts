@@ -209,7 +209,7 @@ export default new class MALSync {
       return await res.json() as T
     } catch (error) {
       const err = error as Error
-      toast.error('MAL Error', { description: err.message })
+      toast.error('MAL Error', { description: err.message, duration: 15_000 })
       console.error(err)
 
       return {

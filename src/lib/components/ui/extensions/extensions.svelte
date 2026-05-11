@@ -32,7 +32,7 @@
         await storage.import(ext)
       } catch (err) {
         const error = err as Error
-        toast.error(error.cause as string, { description: error.message })
+        toast.error(error.cause as string, { description: error.message, duration: 15_000 })
       }
     })()
   }

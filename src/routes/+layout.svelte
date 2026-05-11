@@ -18,7 +18,7 @@
   import { cn } from '$lib/utils'
 
   native.errors(error => {
-    toast.error('Torrent Process Error!', { description: error?.stack ?? error?.message })
+    toast.error('Torrent Process Error!', { description: error?.stack ?? error?.message, duration: 15_000 })
     console.error(error)
   })
 

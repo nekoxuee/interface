@@ -332,7 +332,7 @@ export const extensions = new class Extensions {
 
     if (errors.length) {
       for (const { error, extension } of errors) {
-        toast.error(`Error fetching NZB from ${configs[extension]?.name ?? extension}`, { description: error.message })
+        toast.error(`Error fetching NZB from ${configs[extension]?.name ?? extension}`, { description: error.message, duration: 15_000 })
       }
     }
 
@@ -360,7 +360,7 @@ export const extensions = new class Extensions {
 
     if (errors.length) {
       for (const { error, extension } of errors) {
-        toast.error(`Error fetching subtitles from ${configs[extension]?.name ?? extension}`, { description: error.message })
+        toast.error(`Error fetching subtitles from ${configs[extension]?.name ?? extension}`, { description: error.message, duration: 15_000 })
       }
     }
 

@@ -14,7 +14,8 @@
       $settings.torrentPath = await native.selectDownload(type as 'cache' | 'internal' | 'sdcard' | undefined)
     } catch (error) {
       toast.error('Failed to select download folder. Please try again.', {
-        description: error instanceof Error ? error.message : 'Unknown error occurred.'
+        description: error instanceof Error ? error.message : 'Unknown error occurred.',
+        duration: 15_000
       })
     }
   }

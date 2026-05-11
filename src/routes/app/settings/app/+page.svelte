@@ -22,13 +22,13 @@
       const logs = await native.getLogs()
       saveFile(logs, 'hayase-logs', 'ansi')
       toast.success('Copied to clipboard', {
-        description: 'Copied log contents to clipboard',
-        duration: 5000
+        description: 'Copied log contents to clipboard'
       })
     } catch (error) {
       const err = error as Error
       toast.error('Failed to copy logs!', {
-        description: err.message
+        description: err.message,
+        duration: 15_000
       })
     }
   }
@@ -50,8 +50,7 @@
       native.restart()
     } catch (error) {
       toast.error('Failed to import settings', {
-        description: 'Failed to import settings from file, make sure the selected file is valid JSON.',
-        duration: 5000
+        description: 'Failed to import settings from file, make sure the selected file is valid JSON.'
       })
     }
   }
@@ -60,8 +59,7 @@
       saveFile($settings, 'hayase-settings')
     } catch (error) {
       toast.error('Failed to export settings', {
-        description: 'Failed to export settings to file.',
-        duration: 5000
+        description: 'Failed to export settings to file.'
       })
     }
   }

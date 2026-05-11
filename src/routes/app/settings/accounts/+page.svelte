@@ -72,7 +72,7 @@
 
   function login (promise: Promise<unknown>) {
     promise.catch((e) => {
-      toast.error('Login failed!', { description: e.message })
+      toast.error('Login failed!', { description: e.message, duration: 15_000 })
     })
   }
 </script>

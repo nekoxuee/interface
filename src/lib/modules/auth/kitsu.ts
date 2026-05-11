@@ -129,11 +129,11 @@ export default new class KitsuSync {
       const json = await res.json() as object | KitsuError
 
       if ('error' in json) {
-        toast.error('Kitsu Error', { description: json.error_description })
+        toast.error('Kitsu Error', { description: json.error_description, duration: 15_000 })
         console.error(json)
       } else if ('errors' in json) {
         for (const error of json.errors) {
-          toast.error('Kitsu Error', { description: error.detail })
+          toast.error('Kitsu Error', { description: error.detail, duration: 15_000 })
           console.error(error)
         }
       }
@@ -142,7 +142,7 @@ export default new class KitsuSync {
     } catch (error) {
       const err = error as Error
 
-      toast.error('Kitsu Error', { description: err.message })
+      toast.error('Kitsu Error', { description: err.message, duration: 15_000 })
       console.error(err)
 
       return {

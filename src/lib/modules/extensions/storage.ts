@@ -172,7 +172,7 @@ class CodeManager {
       } catch (e) {
         debug('Worker test failed for', id, e)
         if (get(savedOptions)[id]?.enabled) {
-          toast.error(`Extension ${id} Failed to load!`, { description: (e as Error).message })
+          toast.error(`Extension ${id} Failed to load!`, { description: (e as Error).message, duration: 15_000 })
         }
       }
     } catch (e) {

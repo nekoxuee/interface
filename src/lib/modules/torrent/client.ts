@@ -121,7 +121,7 @@ export const server = new class ServerClient {
 
     native.checkAvailableSpace().then(space => {
       if (space < 1e9) {
-        toast.error('Low disk space', { description: `${fastPrettyBytes(space)} available, 1GB is the recommended minimum. Consider freeing up some space otherwise issues may occur.` })
+        toast.error('Low disk space', { description: `${fastPrettyBytes(space)} available, 1GB is the recommended minimum. Consider freeing up some space otherwise issues may occur.`, duration: 15_000 })
       }
     })
 
@@ -140,7 +140,7 @@ export const server = new class ServerClient {
       try {
         await native.createNZB(hash, nzb)
       } catch (e) {
-        toast.error('Failed to add NZB', { description: (e as Error).message })
+        toast.error('Failed to add NZB', { description: (e as Error).message, duration: 15_000 })
       }
     }
   }

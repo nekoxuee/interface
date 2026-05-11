@@ -16,7 +16,8 @@
         await fn()
       } catch (error) {
         toast.error('Failed to save file!', {
-          description: (error as Error).message
+          description: (error as Error).message,
+          duration: 15_000
         })
       }
     }

@@ -19,7 +19,8 @@
       $settings.torrentPath = await native.selectDownload(type as 'cache' | 'internal' | 'sdcard' | undefined)
     } catch (error) {
       toast.error('Failed to select download folder. Please try again.', {
-        description: (error instanceof Error ? error.message : error as string)
+        description: (error instanceof Error ? error.message : error as string),
+        duration: 15_000
       })
     }
   }
@@ -38,7 +39,8 @@
       return { status: 'success', text: `${fastPrettyBytes(space)} available.` }
     } catch (error) {
       toast.error('Failed to check available storage space.', {
-        description: (error instanceof Error ? error.message : error as string)
+        description: (error instanceof Error ? error.message : error as string),
+        duration: 15_000
       })
       return { status: 'error', text: 'Could not determine available storage space.' }
     }

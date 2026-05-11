@@ -140,7 +140,7 @@
   function handleMediaBunnyFallback ({ detail }: CustomEvent<Error>) {
     useMediaBunnyPlayback = false
     toast.error('Mobile playback setup failed', {
-      description: detail.message || 'Falling back to native playback for this file.'
+      description: detail.message || 'Falling back to native playback for this file.', duration: 15_000
     })
   }
 
@@ -189,7 +189,8 @@
     if (video.audioTracks) {
       if (!video.audioTracks.length) {
         toast.error('Audio Codec Unsupported', {
-          description: "This torrent's audio codec is not supported, try a different release by disabling Autoplay Torrents in Torrent settings. You can also use external players like MPV."
+          description: "This torrent's audio codec is not supported, try a different release by disabling Autoplay Torrents in Torrent settings. You can also use external players like MPV.",
+          duration: 15_000
         })
       } else if (video.audioTracks.length > 1) {
         const preferredTrack = [...video.audioTracks].find(({ language }) => language === $settings.audioLanguage)
@@ -203,7 +204,8 @@
         // using capturestream.getAudioTracks() could work too
         if ('webkitAudioDecodedByteCount' in video && video.webkitAudioDecodedByteCount === 0) {
           toast.error('Audio Codec Unsupported', {
-            description: "This torrent's audio codec is not supported, try a different release by disabling Autoplay Torrents in Torrent settings. You can also use external players like MPV."
+            description: "This torrent's audio codec is not supported, try a different release by disabling Autoplay Torrents in Torrent settings. You can also use external players like MPV.",
+            duration: 15_000
           })
         }
       })

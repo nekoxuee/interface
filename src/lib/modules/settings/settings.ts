@@ -110,7 +110,7 @@ dohSettings.subscribe(({ enableDoH, doHURL }) => {
   } else {
     native.setDOH(enableDoH ? doHURL : '').catch(e => {
       _debug('failed to set DoH ' + e.message)
-      toast.error('Failed to set DoH!', { description: e.message })
+      toast.error('Failed to set DoH!', { description: e.message, duration: 15_000 })
     })
   }
 })
