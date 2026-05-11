@@ -88,7 +88,7 @@ const torrentSettings = derivedDeep(settings, ($settings) => ({
 }))
 
 const hideToTray = derived(settings, $settings => $settings.hideToTray)
-const idleAnimation = derived(settings, $settings => $settings.idleAnimation)
+// const idleAnimation = derived(settings, $settings => $settings.idleAnimation)
 const uiScale = derived(settings, $settings => $settings.uiScale)
 const showDetailsInRPC = derived(settings, $settings => $settings.showDetailsInRPC)
 const angle = derived(settings, $settings => $settings.angle)
@@ -100,7 +100,7 @@ const dohSettings = derivedDeep(settings, $settings => ({
 
 skipFirst(torrentSettings).subscribe(native.updateSettings)
 hideToTray.subscribe(native.setHideToTray)
-idleAnimation.subscribe(native.transparency)
+// idleAnimation.subscribe(native.transparency)
 uiScale.subscribe(native.setZoom)
 showDetailsInRPC.subscribe(native.toggleDiscordDetails)
 angle.subscribe(native.setAngle)

@@ -4,6 +4,8 @@ import { readable } from 'simple-store-svelte'
 import { cubicOut } from 'svelte/easing'
 import { twMerge } from 'tailwind-merge'
 
+import { SUPPORTS } from './modules/settings'
+
 import type { TransitionConfig } from 'svelte/transition'
 
 export function anitomyscript (input: string[]) {
@@ -372,4 +374,16 @@ export async function toSettled<U extends Error, T> (promises: Iterable<Promise<
 export async function filterAsync<T> (arr: T[], predicate: (item: T) => Promise<boolean>): Promise<T[]> {
   const { settled } = await toSettled(arr.map(predicate))
   return arr.filter((_, i) => settled[i])
+}
+
+export function saveFile (data: string | Record<string, unknown>, name: string, ext = 'json') {
+  if (typeof data !== 'string') {
+    data = JSON.stringify(data, null, 2)
+  }
+  const a = document.createElement('a')
+  a.href = !SUPPORTS.isAndroid ? URL.createObjectURL(new File([data], name, { type: `application/${ext}` })) : `data:text/${ext};charset=utf-8,` + encodeURIComponent(data)
+  a.download = name + '.' + ext
+  a.click()
+  URL.revokeObjectURL(a.href)
+  navigator.clipboard.writeText(data)
 }

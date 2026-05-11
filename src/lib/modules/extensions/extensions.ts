@@ -33,7 +33,6 @@ if (!dev) {
   for (const [format, tags] of formats) {
     if (!video.canPlayType(format)) exclusions.push(...tags)
   }
-  video.remove()
 
   if (!('audioTracks' in HTMLVideoElement.prototype)) {
     exclusions.push('DUAL AUDIO', 'Dual Audio', 'MULTI AUDIO', 'Multi Audio')

@@ -11,7 +11,9 @@
   const NAVIGATE_TARGETS = {
     schedule: 'schedule',
     anime: 'anime',
-    w2g: 'w2g'
+    w2g: 'w2g',
+    debug: 'debug',
+    extensions: 'extensions'
   } as const
 
   native.navigate(({ target, value }) => {
@@ -23,7 +25,7 @@
 
   const imageRx = /\.(jpeg|jpg|gif|png|webp)/i
 
-  const w2gRx = /hayas.?ee?(?:(?:\.watch)|(?::\/))?\/w2g\/(.+)/
+  const w2gRx = /hayase\.watch\/\/w2g\/(.+)/
 
   async function handleTransfer (e: { dataTransfer?: DataTransfer | null, clipboardData?: DataTransfer | null } & Event) {
     for (const file of await transferToFileList(e)) {

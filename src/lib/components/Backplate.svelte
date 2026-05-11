@@ -40,14 +40,14 @@
 
   $: active = $lockedState === 'locked' || visibilityState === 'hidden' || ($idleState === 'active' && $activityState === 'active') || $isPlaying
 
-  function checkIdleState (active: boolean, idleAnimation: boolean) {
-    clearTimeout(timeout)
-    if (!idleAnimation || active) return reset()
+  // function checkIdleState (active: boolean, idleAnimation: boolean) {
+  //   clearTimeout(timeout)
+  //   if (!idleAnimation || active) return reset()
 
-    timeout = setTimeout(start, 120_000)
-  }
+  //   timeout = setTimeout(start, 120_000)
+  // }
 
-  $: checkIdleState(active, $settings.idleAnimation)
+  // $: checkIdleState(active, $settings.idleAnimation)
 
 // MOLOT font was commented out in app.css since this feature was shelved
 </script>

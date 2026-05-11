@@ -8,6 +8,7 @@
   import { storage } from '$lib/modules/anilist/urql-client'
   import native from '$lib/modules/native'
   import { settings, SUPPORTS, debug } from '$lib/modules/settings'
+  import { saveFile } from '$lib/utils'
 
   const debugOpts = {
     '': 'None',
@@ -19,7 +20,7 @@
   async function copyLogs () {
     try {
       const logs = await native.getLogs()
-      navigator.clipboard.writeText(logs)
+      saveFile(logs, 'hayase-logs', 'ansi')
       toast.success('Copied to clipboard', {
         description: 'Copied log contents to clipboard',
         duration: 5000
@@ -27,30 +28,6 @@
     } catch (error) {
       const err = error as Error
       toast.error('Failed to copy logs!', {
-        description: err.message
-      })
-    }
-  }
-
-  async function copyDevice () {
-    try {
-      const device = await native.getDeviceInfo() as object
-      const info = {
-        ...device,
-        appInfo: {
-          userAgent: await navigator.userAgentData?.getHighEntropyValues?.(['architecture', 'platform', 'platformVersion']),
-          support: SUPPORTS,
-          settings: $settings
-        }
-      }
-      navigator.clipboard.writeText(JSON.stringify(info, null, 2))
-      toast.success('Copied to clipboard', {
-        description: 'Copied device info to clipboard',
-        duration: 5000
-      })
-    } catch (error) {
-      const err = error as Error
-      toast.error('Failed to copy device info!', {
         description: err.message
       })
     }
@@ -80,16 +57,7 @@
   }
   function exportSettings () {
     try {
-      const url = URL.createObjectURL(new Blob([JSON.stringify($settings)], { type: 'application/json' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'hayase-settings.json'
-      a.click()
-      URL.revokeObjectURL(url)
-      toast.success('Successfully exported settings', {
-        description: 'Downloaded settings to file.',
-        duration: 5000
-      })
+      saveFile($settings, 'hayase-settings')
     } catch (error) {
       toast.error('Failed to export settings', {
         description: 'Failed to export settings to file.',
@@ -127,12 +95,12 @@
   <SingleCombo bind:value={$debug} items={debugOpts} class='w-32 shrink-0 border-input border' />
 </SettingCard>
 
-<SettingCard title='App and Device Info' description='Copy app and device debug info and capabilities, such as GPU information, GPU capabilities, version information and settings to clipboard.'>
-  <Button on:click={copyDevice} class='btn btn-primary font-bold'>Copy To Clipboard</Button>
+<SettingCard title='Debug page' description='Go to the debug page to access additional debugging features.'>
+  <Button href='/app/debug' class='btn btn-primary font-bold'>Go to Debug Page</Button>
 </SettingCard>
 
 {#if !SUPPORTS.isAndroid && !SUPPORTS.isIOS}
-  <SettingCard title='Log Output' description='Copy debug logs to clipboard. Once you enable a logging level you can use this to quickly copy the created logs to clipboard instead of navigating to the log file in directories.'>
+  <SettingCard title='Log Output' description='Save debug logs to a file. Once you enable a logging level you can use this to quickly copy the created logs to clipboard instead of navigating to the log file in directories.'>
     <Button on:click={copyLogs} class='btn btn-primary font-bold'>Copy To Clipboard</Button>
   </SettingCard>
 

@@ -14,6 +14,8 @@ import { w2globby } from '../w2g/lobby'
 import type { Media } from '../anilist'
 import type { TorrentFile, TorrentInfo } from 'native'
 
+import { fastPrettyBytes } from '$lib/utils'
+
 const debug = Debug('ui:torrent-client')
 
 const defaultTorrentInfo: TorrentInfo = {
@@ -55,7 +57,7 @@ export const server = new class ServerClient {
           const id = (await get(this.active))?.id
           if (id) set(await fn(id))
         } catch (error) {
-          console.error(error)
+          console.warn(error)
         }
         listener = setTimeout(update, duration)
       }
@@ -110,10 +112,19 @@ export const server = new class ServerClient {
   async _play (id: string, torrent: string | ArrayBufferView, media: Media, episode: number) {
     const result = { id, media, episode, files: await native.playTorrent(torrent, media.id, episode) }
     debug('torrent play result', result)
+
     const hash = result.files[0]!.hash
     if (get(this.last)?.id === id) this.last.set({ id: hash, media, episode })
     this.downloaded.value.add(hash)
+
     this._addNZBs(hash, media, episode, result.files.map(({ name }) => name))
+
+    native.checkAvailableSpace().then(space => {
+      if (space < 1e9) {
+        toast.error('Low disk space', { description: `${fastPrettyBytes(space)} available, 1GB is the recommended minimum. Consider freeing up some space otherwise issues may occur.` })
+      }
+    })
+
     return result
   }
 

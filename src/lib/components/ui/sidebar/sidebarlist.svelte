@@ -36,7 +36,6 @@
   native.updateProgress(progress => {
     updateProgress = progress
   })
-  native.checkUpdate()
 
   function updateAndRestart () {
     if (updateProgress === 100) native.updateAndRestart()
