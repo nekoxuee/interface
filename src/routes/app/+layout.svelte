@@ -47,9 +47,9 @@
 
 <svelte:window on:dragover|preventDefault on:drop={handleTransfer} on:paste={handleTransfer} />
 
-<BannerImage class='absolute top-0 left-0 -z-[1]' />
+<BannerImage class='absolute top-0 left-0' />
 <SearchModal />
-<div class='flex flex-row grow h-full overflow-clip group/fullscreen min-h-0' id='episodeListTarget'>
+<div class='flex flex-row grow h-full overflow-clip group/fullscreen min-h-0 z-[1]' id='episodeListTarget'>
   <Sidebar>
     <Sidebarlist />
   </Sidebar>

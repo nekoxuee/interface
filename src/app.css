@@ -138,14 +138,19 @@
   }
 }
 
-/* @font-face {
-  font-family: 'molotregular';
-  src: url('/Molot-webfont-subset.woff') format('woff');
-} */
 
 @font-face {
   font-family: "Twemoji";
   src: url("/twemoji-subset.woff2") format("woff2");
+}
+
+.font-twemoji {
+  font-family: 'Twemoji';
+}
+
+::selection {
+  background: #1f375a6b;
+  color: #3cabfa;
 }
 
 html,
@@ -299,7 +304,7 @@ details,
 
 /* Backplate related things */
 
-body {
+/* body {
   perspective: 3000px;
 }
 
@@ -319,7 +324,7 @@ body {
 #root {
   transition: transform 0.5s;
   transform: perspective(100vw) translate3d(0, 0, 0vw) rotateY(0deg) rotateX(0deg);
-}
+}*/
 
 ::view-transition-old(my-root),
 ::view-transition-new(my-root) {
@@ -484,12 +489,13 @@ body {
   background-size: 119px;
 }
 
-/* .font-molot {
+/* @font-face {
   font-family: 'molotregular';
-} */
+  src: url('/Molot-webfont-subset.woff') format('woff');
+}
 
-.font-twemoji {
-  font-family: 'Twemoji';
+.font-molot {
+  font-family: 'molotregular';
 }
 
 .backface-visible {
@@ -502,4 +508,4 @@ body {
 
 .preserve-3d {
   transform-style: preserve-3d;
-}
+} */

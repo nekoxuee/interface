@@ -19,7 +19,7 @@
   stroke-width={strokeWidth}
   stroke-linecap='round'
   stroke-linejoin='round'
-  class={cn(className, 'overflow-visible [transform-origin:center] target-animated-icon')}
+  class={cn(className, 'overflow-visible align-middle target-animated-icon')}
   {...$$restProps}
 >
   <path

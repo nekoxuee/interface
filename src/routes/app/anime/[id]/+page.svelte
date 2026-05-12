@@ -5,6 +5,7 @@
 
   import EpisodesList from '$lib/components/EpisodesList.svelte'
   import { Threads } from '$lib/components/ui/forums'
+  import Recommendations from '$lib/components/ui/recommendations/Recommendations.svelte'
   import { Relations } from '$lib/components/ui/relations'
   import * as Tabs from '$lib/components/ui/tabs'
   import { Themes } from '$lib/components/ui/themes'
@@ -30,11 +31,12 @@
 
 <Tabs.Root bind:value class='w-full' activateOnFocus={false} orientation={$breakpoints.xs ? 'horizontal' : 'vertical'}>
   <div class='flex justify-center md:justify-start'>
-    <Tabs.List orientation={$breakpoints.xs ? 'horizontal' : 'vertical'}>
+    <Tabs.List orientation={$breakpoints.md ? 'horizontal' : 'vertical'}>
       <Tabs.Trigger value='episodes' tabindex={0} class='px-8 data-[state=active]:bg-custom data-[state=active]:text-contrast data-[state=active]:font-bold'>Episodes</Tabs.Trigger>
       <Tabs.Trigger value='relations' tabindex={0} class='px-8 data-[state=active]:bg-custom data-[state=active]:text-contrast data-[state=active]:font-bold'>Relations</Tabs.Trigger>
       <Tabs.Trigger value='threads' tabindex={0} class='px-8 data-[state=active]:bg-custom data-[state=active]:text-contrast data-[state=active]:font-bold'>Threads</Tabs.Trigger>
       <Tabs.Trigger value='themes' tabindex={0} class='px-8 data-[state=active]:bg-custom data-[state=active]:text-contrast data-[state=active]:font-bold'>Themes</Tabs.Trigger>
+      <Tabs.Trigger value='recommendations' tabindex={0} class='px-8 data-[state=active]:bg-custom data-[state=active]:text-contrast data-[state=active]:font-bold'>Recommendations</Tabs.Trigger>
     </Tabs.List>
   </div>
   <Tabs.Content value='episodes' tabindex={-1}>
@@ -62,5 +64,10 @@
         <Themes {media} />
       {/if}
     {/key}
+  </Tabs.Content>
+  <Tabs.Content value='recommendations' tabindex={-1}>
+    {#if value === 'recommendations'}
+      <Recommendations {mediaId} />
+    {/if}
   </Tabs.Content>
 </Tabs.Root>

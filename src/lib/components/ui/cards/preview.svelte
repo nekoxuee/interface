@@ -33,7 +33,7 @@
       <Videoframe src={trace.video} on:hide={hide} />
     {:else}
       {#if !SUPPORTS.isUnderPowered}
-        <Banner {media} class={cn('object-cover size-full blur-2xl saturate-200 absolute -z-10', hideFrame === false && 'hidden')} />
+        <Banner {media} class={cn('object-cover size-full !blur-2xl !saturate-200 absolute -z-10', hideFrame === false && 'hidden')} />
       {/if}
       <Banner {media} class='object-cover size-full rounded-t' />
       {#if media.trailer?.id && !hideFrame && !SUPPORTS.isUnderPowered}

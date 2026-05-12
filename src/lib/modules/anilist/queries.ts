@@ -415,6 +415,23 @@ export const Threads = gql(`
   }
 `, [ThreadFrag])
 
+export const Recommendations = gql(`
+  query Recommendations($id: Int!) {
+    Media(id: $id) {
+      id,
+      recommendations(sort: [RATING_DESC, ID], perPage: 24) {
+        nodes {
+          id,
+          rating,
+          mediaRecommendation {
+            ...FullMedia
+          }
+        }
+      }
+    }
+  }
+`, [FullMedia])
+
 export const Thread = gql(`
   query Thread($threadId: Int!) {
     Thread(id: $threadId) {

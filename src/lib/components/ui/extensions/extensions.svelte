@@ -127,29 +127,29 @@
             </div>
             <div class='[flex-wrap:balance] w-full justify-start gap-2 flex text-neutral-300 text-sm'>
               {#if config.deprecated}
-                <div class='rounded px-3 py-0.5 font-bold bg-yellow-800 leading-snug'>
+                <div class='rounded px-3 py-0.5 font-bold bg-yellow-800 leading-snug text-nowrap'>
                   Deprecated
                 </div>
               {:else if config.manifestVersion !== MANIFEST_VERSION}
-                <div class='rounded px-3 py-0.5 font-bold bg-red-900 leading-snug'>
+                <div class='rounded px-3 py-0.5 font-bold bg-red-900 leading-snug text-nowrap'>
                   Outdated
                 </div>
               {/if}
-              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug'>
+              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug text-nowrap'>
                 {config.version}
               </div>
-              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug'>
+              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug text-nowrap'>
                 {typeMap[config.type]}
               </div>
-              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug capitalize'>
+              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug text-nowrap capitalize'>
                 {config.accuracy} Accuracy
               </div>
               {#if config.ratio}
-                <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug'>
+                <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug text-nowrap'>
                   {config.ratio} Ratio
                 </div>
               {/if}
-              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug capitalize'>
+              <div class='rounded px-3 py-0.5 font-bold bg-neutral-900 leading-snug text-nowrap capitalize'>
                 {config.media}
               </div>
               {#if config.languages}

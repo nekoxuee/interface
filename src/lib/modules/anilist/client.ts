@@ -5,7 +5,7 @@ import { derived, get, readable, writable, type Writable } from 'svelte/store'
 
 import { nsfw } from '../settings/settings'
 
-import { Comments, DeleteEntry, DeleteThreadComment, Entry, Following, FollowingMany, type FullMedia, IDMedia, IDTitle, RecrusiveRelations, SaveThreadComment, Schedule, Search, Threads, ToggleFavourite, ToggleLike, UserLists } from './queries'
+import { Comments, DeleteEntry, DeleteThreadComment, Entry, Following, FollowingMany, type FullMedia, IDMedia, IDTitle, Recommendations, RecrusiveRelations, SaveThreadComment, Schedule, Search, Threads, ToggleFavourite, ToggleLike, UserLists } from './queries'
 import urqlClient from './urql-client'
 import { currentSeason, currentYear, lastSeason, lastYear, nextSeason, nextYear } from './util'
 
@@ -260,6 +260,11 @@ class AnilistClient {
   threads (animeID: number, page = 1) {
     debug('threads: fetching threads for anime with ID', animeID, 'on page', page)
     return queryStore({ client: this.client, query: Threads, variables: { id: animeID, page, perPage: 16 } })
+  }
+
+  recommendations (animeID: number) {
+    debug('recommendations: fetching recommendations for anime with ID', animeID)
+    return queryStore({ client: this.client, query: Recommendations, variables: { id: animeID } })
   }
 
   comments (threadId: number, page = 1) {
