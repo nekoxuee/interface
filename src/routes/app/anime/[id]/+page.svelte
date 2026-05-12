@@ -4,12 +4,11 @@
   import type { PageData } from './$types'
 
   import EpisodesList from '$lib/components/EpisodesList.svelte'
+  import Recommendation from '$lib/components/ui/cards/recommendation.svelte'
   import { Threads } from '$lib/components/ui/forums'
-  import Recommendations from '$lib/components/ui/recommendations/Recommendations.svelte'
   import { Relations } from '$lib/components/ui/relations'
   import * as Tabs from '$lib/components/ui/tabs'
   import { Themes } from '$lib/components/ui/themes'
-  import { authAggregator } from '$lib/modules/auth'
   import '@xyflow/svelte/dist/style.css'
   import { breakpoints, cn } from '$lib/utils'
 
@@ -19,10 +18,11 @@
 
   $: media = $anime.Media!
 
+  $: info = data.info
+
   let expanded = false
 
   $: mediaId = media.id
-  $: following = authAggregator.following(mediaId)
 
   $: eps = data.eps
 
@@ -40,7 +40,7 @@
     </Tabs.List>
   </div>
   <Tabs.Content value='episodes' tabindex={-1}>
-    <EpisodesList {media} {eps} {following} />
+    <EpisodesList {media} {eps} following={info} />
   </Tabs.Content>
   <Tabs.Content value='relations' tabindex={-1}>
     {#if value === 'relations'}
@@ -54,7 +54,7 @@
   <Tabs.Content value='threads' tabindex={-1}>
     {#key mediaId}
       {#if value === 'threads'}
-        <Threads {media} />
+        <Threads {media} initial={info} />
       {/if}
     {/key}
   </Tabs.Content>
@@ -66,8 +66,12 @@
     {/key}
   </Tabs.Content>
   <Tabs.Content value='recommendations' tabindex={-1}>
-    {#if value === 'recommendations'}
-      <Recommendations {mediaId} />
-    {/if}
+    {#key mediaId}
+      {#if value === 'recommendations'}
+        <div class='pointer-events-auto grid justify-center grid-cols-[repeat(auto-fill,minmax(184px,max-content))]'>
+          <Recommendation query={info} />
+        </div>
+      {/if}
+    {/key}
   </Tabs.Content>
 </Tabs.Root>

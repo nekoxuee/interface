@@ -317,7 +317,7 @@ export const Schedule = gql(`
 
 export const Following = gql(`
   query Following($id: Int!) {
-    Page {
+    following: Page {
       mediaList(mediaId: $id, isFollowing: true, sort: UPDATED_TIME_DESC) {
         id,
         status,
@@ -403,7 +403,7 @@ export const ThreadFrag = gql(`
 
 export const Threads = gql(`
   query Threads($id: Int!, $page: Int, $perPage: Int) {
-    Page(page: $page, perPage: $perPage) {
+    threads: Page(page: $page, perPage: $perPage) {
       pageInfo {
         hasNextPage,
         total
@@ -564,3 +564,40 @@ export const RecrusiveRelations = gql(`
     }
   }
 `, [RelationMedia])
+
+export const AnimePage = gql(`
+  query AnimePage($id: Int!) {
+    Media(id: $id, type: ANIME) {
+      ...FullMedia,
+      recommendations(sort: [RATING_DESC, ID], perPage: 24) {
+        nodes {
+          id,
+          rating,
+          mediaRecommendation {
+            ...FullMedia
+          }
+        }
+      }
+    },
+    following: Page {
+      mediaList(mediaId: $id, isFollowing: true, sort: UPDATED_TIME_DESC) {
+        id,
+        status,
+        score,
+        progress,
+        user {
+          ...UserFrag
+        }
+      }
+    },
+    threads: Page(page: 1, perPage: 16) {
+      pageInfo {
+        hasNextPage,
+        total
+      },
+      threads(mediaCategoryId: $id, sort: ID_DESC) {
+        ...ThreadFrag
+      }
+    }
+  }
+`, [FullMedia, ThreadFrag, UserFrag])

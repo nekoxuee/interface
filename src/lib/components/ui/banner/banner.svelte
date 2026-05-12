@@ -2,19 +2,14 @@
   import { client, currentSeason, currentYear } from '$lib/modules/anilist'
 
   const query = client.search({ sort: ['SCORE_DESC'], perPage: 15, season: currentSeason, seasonYear: currentYear, statusNot: ['NOT_YET_RELEASED'] }, true)
-  query.subscribe(() => undefined) // this is hacky as shit, but prevents query from re-running
+  query.subscribe(() => undefined) // this is hacky, but prevents query from re-running
 </script>
 
 <script lang='ts'>
-  import { onDestroy } from 'svelte'
   import { get } from 'svelte/store'
 
   import FullBanner from './full-banner.svelte'
   import SkeletonBanner from './skeleton-banner.svelte'
-
-  onDestroy(() => {
-    query.pause()
-  })
 
   if (get(query.isPaused$)) query.resume()
 </script>

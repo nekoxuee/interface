@@ -56,7 +56,7 @@ export class ExtensionWorker<TSource extends TorrentSource | NZBSource | Subtitl
     const queryWithFetch = { ...query, fetch: _fetch }
 
     // @ts-expect-error w/e cba
-    return await (await this.mod).single(queryWithFetch, options)
+    return await (await this.mod).single?.(queryWithFetch, options)
   }
 
   async batch (
@@ -66,12 +66,12 @@ export class ExtensionWorker<TSource extends TorrentSource | NZBSource | Subtitl
     const queryWithFetch = { ...query, fetch: _fetch }
 
     // @ts-expect-error w/e cba
-    return await (await this.mod).batch(queryWithFetch, options)
+    return await (await this.mod).batch?.(queryWithFetch, options)
   }
 
   async movie (query: AnimeQuery, options?: SearchOptions) {
     const queryWithFetch = { ...query, fetch: _fetch }
-    return await (await this.mod as unknown as TorrentSource).movie(queryWithFetch, options)
+    return await (await this.mod as unknown as TorrentSource).movie?.(queryWithFetch, options)
   }
 
   async test () {

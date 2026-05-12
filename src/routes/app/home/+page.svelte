@@ -1,5 +1,5 @@
 <script lang='ts' context='module'>
-  import { derived, type Readable } from 'svelte/store'
+  import { derived } from 'svelte/store'
 
   import type { Search } from '$lib/modules/anilist/queries'
   import type { VariablesOf } from 'gql.tada'
@@ -35,35 +35,43 @@
     variables: VariablesOf<typeof Search>
   }
 
-  const sectionQueries = derived<[
-    Readable<number[] | null>, Readable<number[] | null>, Readable<number[] | null>], SectionQuery[]
-  >([authAggregator.continueIDs, authAggregator.sequelIDs, authAggregator.planningIDs], ([continueIDs, sequelIDs, planningIDs], set) => {
-    const sections = [...sectionsQueries]
-    const unsub: Array<() => void> = []
+  const sequelSectionQuery = derived(authAggregator.sequelIDs, (sequelIDs, set: (value: SectionQuery | null) => void) => {
+    if (!sequelIDs) return set(null)
 
-    if (sequelIDs) {
-      const sequelsQuery = client.search({ ids: sequelIDs, status: ['FINISHED', 'RELEASING'], onList: false }, true)
-      unsub.push(sequelsQuery.subscribe(() => undefined))
-      sections.unshift({ title: 'Sequels You Missed', query: sequelsQuery, variables: { ids: sequelIDs, status: ['FINISHED', 'RELEASING'], onList: false } })
-    }
-    if (planningIDs) {
-      const planningQuery = client.search({ ids: planningIDs, status: ['FINISHED', 'RELEASING'], sort: ['START_DATE_DESC'] }, true)
-      unsub.push(planningQuery.subscribe(() => undefined))
-      sections.unshift({ title: 'Your List', query: planningQuery, variables: { ids: planningIDs, status: ['FINISHED', 'RELEASING'], sort: ['START_DATE_DESC'] } })
-    }
-    if (continueIDs) {
-      const contiueQuery = derived(client.search({ ids: continueIDs.slice(0, 50), sort: ['UPDATED_AT_DESC'] }, false), value => {
-        value.data?.Page?.media?.sort((a, b) => continueIDs.indexOf(a?.id ?? 0) - continueIDs.indexOf(b?.id ?? 0))
-        return value
-      }) as ReturnType<typeof client.search>
-      unsub.push(contiueQuery.subscribe(() => undefined))
-      sections.unshift({ title: 'Continue Watching', query: contiueQuery, variables: { ids: continueIDs, sort: ['UPDATED_AT_DESC'] } })
-    }
+    const query = client.search({ ids: sequelIDs, status: ['FINISHED', 'RELEASING'], onList: false }, true)
+    set({ title: 'Sequels You Missed', query, variables: { ids: sequelIDs, status: ['FINISHED', 'RELEASING'], onList: false } })
 
-    set(sections)
-
-    return () => unsub.forEach(fn => fn())
+    return query.subscribe(() => undefined)
   })
+
+  const planningSectionQuery = derived(authAggregator.planningIDs, (planningIDs, set: (value: SectionQuery | null) => void) => {
+    if (!planningIDs) return set(null)
+
+    const query = client.search({ ids: planningIDs, status: ['FINISHED', 'RELEASING'], sort: ['START_DATE_DESC'] }, true)
+    set({ title: 'Your List', query, variables: { ids: planningIDs, status: ['FINISHED', 'RELEASING'], sort: ['START_DATE_DESC'] } })
+
+    return query.subscribe(() => undefined)
+  })
+
+  const continueSectionQuery = derived(authAggregator.continueIDs, (continueIDs, set: (value: SectionQuery | null) => void) => {
+    if (!continueIDs) return set(null)
+
+    const query = derived(client.search({ ids: continueIDs.slice(0, 50), sort: ['UPDATED_AT_DESC'] }, false), value => {
+      value.data?.Page?.media?.sort((a, b) => continueIDs.indexOf(a?.id ?? 0) - continueIDs.indexOf(b?.id ?? 0))
+      return value
+    }) as ReturnType<typeof client.search>
+    set({ title: 'Continue Watching', query, variables: { ids: continueIDs, sort: ['UPDATED_AT_DESC'] } })
+
+    return query.subscribe(() => undefined)
+  })
+
+  const sectionQueries = derived(
+    [continueSectionQuery, planningSectionQuery, sequelSectionQuery],
+    ([continueSection, planningSection, sequelSection]) => [
+      ...[continueSection, planningSection, sequelSection].filter((section) => section !== null),
+      ...sectionsQueries
+    ]
+  )
   sectionQueries.subscribe(() => undefined)
 </script>
 
@@ -88,8 +96,7 @@
 
   onDestroy(() => {
     for (const { query } of $sectionQueries) {
-      // eslint-disable-next-line svelte/require-store-reactive-access
-      if ('pause' in query) query.pause()
+      query.pause?.()
     }
   })
 </script>

@@ -12,7 +12,7 @@
   import type { EpisodesResponse } from '$lib/modules/anizip/types'
 
   import Logo from '$lib/components/icons/Logo.svelte'
-  import { episodes as _episodes, notes, type Media } from '$lib/modules/anilist'
+  import { episodes as _episodes, client, notes, type Media } from '$lib/modules/anilist'
   import { authAggregator, list, progress } from '$lib/modules/auth'
   import { makeEpisodeList } from '$lib/modules/extensions'
   import { click, dragScroll } from '$lib/modules/navigate'
@@ -42,9 +42,9 @@
     $playEp(media, episode)
   }
 
-  export let following = authAggregator.following(media.id)
+  export let following = client.following(media.id)
 
-  $: followerEntries = $following?.data?.Page?.mediaList?.filter(e => e?.user?.id !== authAggregator.id()) ?? []
+  $: followerEntries = $following?.data?.following?.mediaList?.filter(e => e?.user?.id !== authAggregator.id()) ?? []
 
   $: watchProgress = liveAnimeProgress(media.id)
 </script>

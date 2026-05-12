@@ -46,9 +46,8 @@
     hideBanner.value = target.scrollTop > 100
   }
 
-  $: mediaId = media.id
-  $: following = authAggregator.following(mediaId)
-  $: followerEntries = $following?.data?.Page?.mediaList?.filter(e => e?.user?.id !== authAggregator.id()) ?? []
+  $: info = data.info
+  $: followerEntries = $info?.data?.following?.mediaList?.filter(e => e?.user?.id !== authAggregator.id()) ?? []
 
   $: nativeTitle = media.title?.native ?? media.title?.romaji ?? ''
   $: romajiTitle = media.title?.romaji ?? media.title?.native ?? ''

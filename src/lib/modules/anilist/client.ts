@@ -5,7 +5,7 @@ import { derived, get, readable, writable, type Writable } from 'svelte/store'
 
 import { nsfw } from '../settings/settings'
 
-import { Comments, DeleteEntry, DeleteThreadComment, Entry, Following, FollowingMany, type FullMedia, IDMedia, IDTitle, Recommendations, RecrusiveRelations, SaveThreadComment, Schedule, Search, Threads, ToggleFavourite, ToggleLike, UserLists } from './queries'
+import { AnimePage, Comments, DeleteEntry, DeleteThreadComment, Entry, Following, FollowingMany, type FullMedia, IDMedia, IDTitle, Recommendations, RecrusiveRelations, SaveThreadComment, Schedule, Search, Threads, ToggleFavourite, ToggleLike, UserLists } from './queries'
 import urqlClient from './urql-client'
 import { currentSeason, currentYear, lastSeason, lastYear, nextSeason, nextYear } from './util'
 
@@ -75,7 +75,7 @@ class AnilistClient {
       debug('sequelIDs: checking for IDs')
       if (!values.data?.MediaListCollection?.lists) return
       const mediaList = values.data.MediaListCollection.lists.find(list => list?.status === 'COMPLETED')?.entries
-      if (!mediaList) return []
+      if (!mediaList) return
 
       const ids = [...new Set(mediaList.flatMap(entry => {
         return entry?.media?.relations?.edges?.filter(edge => edge?.relationType === 'SEQUEL')
@@ -95,7 +95,7 @@ class AnilistClient {
       debug('planningIDs: checking for IDs')
       if (!userLists.data?.MediaListCollection?.lists) return
       const mediaList = userLists.data.MediaListCollection.lists.find(list => list?.status === 'PLANNING')?.entries
-      if (!mediaList) return []
+      if (!mediaList) return
       const ids = mediaList.map(entry => entry?.media?.id) as number[]
 
       debug('planningIDs: found IDs', ids)
@@ -252,9 +252,9 @@ class AnilistClient {
     return queryStore({ client: this.client, query: Following, variables: { id: animeID } })
   }
 
-  followingMany (animeIDs: number[]) {
+  followingMany (animeIDs: number[], requestPolicy: RequestPolicy = 'cache-and-network') {
     debug('followingMany: fetching following for anime with IDs', animeIDs)
-    return queryStore({ client: this.client, query: FollowingMany, variables: { ids: animeIDs } })
+    return queryStore({ client: this.client, query: FollowingMany, variables: { ids: animeIDs }, context: { requestPolicy } })
   }
 
   threads (animeID: number, page = 1) {
@@ -285,6 +285,11 @@ class AnilistClient {
   async deleteComment (id: number, rootCommentId: number) {
     debug('deleteComment: deleting comment with ID', id, 'rootCommentId', rootCommentId)
     return await this.client.mutation(DeleteThreadComment, { id, rootCommentId })
+  }
+
+  animePage (id: number) {
+    debug('animePage: fetching anime page for ID', id)
+    return queryStore({ client: this.client, query: AnimePage, variables: { id }, context: { requestPolicy: 'cache-and-network' } })
   }
 
   _relationsTreeCache = new Map<number, RelationsStore>()

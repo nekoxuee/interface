@@ -1,4 +1,4 @@
-<script lang='ts'>
+<!-- <script lang='ts'>
   import { activityState, idleState, isPlaying, lockedState } from '$lib/modules/idle'
   import { settings } from '$lib/modules/settings'
   import { sleep } from '$lib/utils'
@@ -89,4 +89,4 @@
     transition: transform 0.5s;
     transform: perspective(100vw) translate3d(0, 0, 0vw) rotateY(180deg) rotateX(0deg);
   }
-</style>
+</style> -->
