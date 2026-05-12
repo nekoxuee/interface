@@ -1,5 +1,5 @@
 import { readable } from 'simple-store-svelte'
-import { derived, get } from 'svelte/store'
+import { get } from 'svelte/store'
 import { persisted } from 'svelte-persisted-store'
 
 import { client, episodes, type Media } from '../anilist'
@@ -10,6 +10,8 @@ import mal from './mal'
 
 import type { Entry, UserFrag } from '../anilist/queries'
 import type { ResultOf, VariablesOf } from 'gql.tada'
+
+import { derivedArray } from '$lib/utils'
 
 export default new class AuthAggregator {
   hasAuth = readable(this.checkAuth(), set => {
@@ -88,7 +90,7 @@ export default new class AuthAggregator {
     ])
   }
 
-  planningIDs = derived([client.planningIDs, kitsu.planningIDs, local.planningIDs, mal.planningIDs], ([$client, $kitsu, $local, $mal]) => {
+  planningIDs = derivedArray([client.planningIDs, kitsu.planningIDs, local.planningIDs, mal.planningIDs], ([$client, $kitsu, $local, $mal]) => {
     if (this.anilist()) return $client
     if (this.kitsu()) return $kitsu
     if (this.mal()) return $mal
@@ -96,7 +98,7 @@ export default new class AuthAggregator {
     return null
   })
 
-  continueIDs = derived([client.continueIDs, kitsu.continueIDs, local.continueIDs, mal.continueIDs], ([$client, $kitsu, $local, $mal]) => {
+  continueIDs = derivedArray([client.continueIDs, kitsu.continueIDs, local.continueIDs, mal.continueIDs], ([$client, $kitsu, $local, $mal]) => {
     if (this.anilist()) return $client
     if (this.kitsu()) return $kitsu
     if (this.mal()) return $mal
@@ -104,7 +106,7 @@ export default new class AuthAggregator {
     return null
   })
 
-  sequelIDs = derived([client.sequelIDs], ([$client]) => {
+  sequelIDs = derivedArray([client.sequelIDs], ([$client]) => {
     if (this.anilist()) return $client
     return null
   })

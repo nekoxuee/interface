@@ -1,7 +1,7 @@
 import { queryStore, type OperationResultState, gql as _gql } from '@urql/svelte'
 import Debug from 'debug'
 import lavenshtein from 'js-levenshtein'
-import { derived, get, readable, writable, type Writable } from 'svelte/store'
+import { derived, get, writable, type Writable } from 'svelte/store'
 
 import { nsfw } from '../settings/settings'
 
@@ -14,7 +14,7 @@ import type { Edge, Node } from '@xyflow/svelte'
 import type { ResultOf, VariablesOf } from 'gql.tada'
 import type { AnyVariables, OperationContext, RequestPolicy, TypedDocumentNode } from 'urql'
 
-import { arrayEqual } from '$lib/utils'
+import { derivedArray } from '$lib/utils'
 
 const debug = Debug('ui:anilist')
 
@@ -44,66 +44,45 @@ class AnilistClient {
     return queryStore({ client: this.client, query: UserLists, variables: { id: store?.viewer?.id }, context: { requestPolicy: 'cache-and-network' } }).subscribe(set)
   })
 
-  // WARN: these 3 sections are hacky, i use oldvalue to prevent re-running loops, I DO NOT KNOW WHY THE LOOPS HAPPEN!
-  continueIDs = readable<number[]>([], set => {
-    let oldvalue: number[] = []
-    return this.userlists.subscribe(values => {
-      debug('continueIDs: checking for IDs')
-      if (!values.data?.MediaListCollection?.lists) return
-      const mediaList = values.data.MediaListCollection.lists.reduce<NonNullable<NonNullable<NonNullable<NonNullable<ResultOf<typeof UserLists>['MediaListCollection']>['lists']>[0]>['entries']>>((filtered, list) => {
-        return (list?.status === 'CURRENT' || list?.status === 'REPEATING') ? filtered.concat(list.entries) : filtered
-      }, [])
+  continueIDs = derivedArray(this.userlists, $userLists => {
+    debug('continueIDs: checking for IDs')
+    const mediaList = $userLists.data?.MediaListCollection?.lists?.reduce<NonNullable<NonNullable<NonNullable<NonNullable<ResultOf<typeof UserLists>['MediaListCollection']>['lists']>[0]>['entries']>>((filtered, list) => {
+      return (list?.status === 'CURRENT' || list?.status === 'REPEATING') ? filtered.concat(list.entries) : filtered
+    }, [])
+    if (!mediaList?.length) return []
 
-      const ids = mediaList.filter(entry => {
-        if (entry?.media?.status === 'FINISHED') return true
-        const progress = entry?.media?.mediaListEntry?.progress ?? 0
-        // +2 is for series that don't have the next airing episode scheduled, but are still some-how airing, AL likes to fuck this up a lot, -1 is because we care about the latest aired available episode, not the next aired episode
-        return progress < (entry?.media?.nextAiringEpisode?.episode ?? (progress + 2)) - 1
-      }).map(entry => entry?.media?.id) as number[]
+    const ids = mediaList.filter(entry => {
+      if (entry?.media?.status === 'FINISHED') return true
+      const progress = entry?.media?.mediaListEntry?.progress ?? 0
+      // +2 is for series that don't have the next airing episode scheduled, but are still some-how airing, AL likes to fuck this up a lot, -1 is because we care about the latest aired available episode, not the next aired episode
+      return progress < (entry?.media?.nextAiringEpisode?.episode ?? (progress + 2)) - 1
+    }).map(entry => entry?.media?.id) as number[]
 
-      debug('continueIDs: found IDs', ids)
-      if (arrayEqual(oldvalue, ids)) return
-      oldvalue = ids
-      debug('continueIDs: updated IDs')
-      set(ids)
-    })
+    debug('continueIDs: found IDs', ids)
+
+    return ids
   })
 
-  sequelIDs = readable<number[]>([], set => {
-    let oldvalue: number[] = []
-    return this.userlists.subscribe(values => {
-      debug('sequelIDs: checking for IDs')
-      if (!values.data?.MediaListCollection?.lists) return
-      const mediaList = values.data.MediaListCollection.lists.find(list => list?.status === 'COMPLETED')?.entries
-      if (!mediaList) return
+  sequelIDs = derivedArray(this.userlists, $userLists => {
+    debug('sequelIDs: checking for IDs')
+    const mediaList = $userLists.data?.MediaListCollection?.lists?.find(list => list?.status === 'COMPLETED')?.entries
+    if (!mediaList) return []
 
-      const ids = [...new Set(mediaList.flatMap(entry => {
-        return entry?.media?.relations?.edges?.filter(edge => edge?.relationType === 'SEQUEL')
-      }).map(edge => edge?.node?.id))] as number[]
+    const ids = [...new Set(mediaList.flatMap(entry => {
+      return entry?.media?.relations?.edges?.filter(edge => edge?.relationType === 'SEQUEL')
+    }).map(edge => edge?.node?.id))] as number[]
 
-      debug('sequelIDs: found IDs', ids)
-      if (arrayEqual(oldvalue, ids)) return
-      oldvalue = ids
-      debug('sequelIDs: updated IDs')
-      set(ids)
-    })
+    debug('sequelIDs: found IDs', ids)
+    return ids
   })
 
-  planningIDs = readable<number[]>([], set => {
-    let oldvalue: number[] = []
-    return this.userlists.subscribe(userLists => {
-      debug('planningIDs: checking for IDs')
-      if (!userLists.data?.MediaListCollection?.lists) return
-      const mediaList = userLists.data.MediaListCollection.lists.find(list => list?.status === 'PLANNING')?.entries
-      if (!mediaList) return
-      const ids = mediaList.map(entry => entry?.media?.id) as number[]
-
-      debug('planningIDs: found IDs', ids)
-      if (arrayEqual(oldvalue, ids)) return
-      oldvalue = ids
-      debug('planningIDs: updated IDs')
-      set(ids)
-    })
+  planningIDs = derivedArray(this.userlists, $userLists => {
+    debug('planningIDs: checking for IDs')
+    const mediaList = $userLists.data?.MediaListCollection?.lists?.find(list => list?.status === 'PLANNING')?.entries
+    if (!mediaList) return []
+    const ids = mediaList.map(entry => entry?.media?.id).filter((id): id is number => !!id)
+    debug('planningIDs: found IDs', ids)
+    return ids
   })
 
   search (variables: VariablesOf<typeof Search>, pause?: boolean) {

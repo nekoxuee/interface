@@ -56,6 +56,12 @@ export class W2GClient extends EventEmitter<{index: [number], player: [PlayerSta
   self: ChatUser = client.client.viewer.value?.viewer ?? { id: generateRandomHexCode(16), avatar: null, mediaListOptions: null, name: 'Guest' }
   peers = writable<PeerList>({ [this.self.id]: { user: this.self } })
 
+  reannounceInterval = setInterval(() => {
+    if (this.destroyed) return
+    debug('reannounce')
+    this.#p2pt.requestMorePeers()
+  }, 1000 * 30)
+
   get inviteLink () {
     return `https://hayase.watch/w2g/${this.code}`
   }
@@ -223,5 +229,6 @@ export class W2GClient extends EventEmitter<{index: [number], player: [PlayerSta
     this.removeAllListeners()
     this.isHost = false
     this.peers.value = {}
+    clearInterval(this.reannounceInterval)
   }
 }

@@ -1,5 +1,5 @@
 import Debug from 'debug'
-import { derived, type Readable } from 'svelte/store'
+import { derived } from 'svelte/store'
 import { persisted } from 'svelte-persisted-store'
 import { toast } from 'svelte-sonner'
 
@@ -10,6 +10,7 @@ import SUPPORTS from './supports'
 import { defaults } from '.'
 
 import { dev } from '$app/environment'
+import { derivedDeep, skipFirst } from '$lib/utils'
 
 const _debug = Debug('ui:settings')
 
@@ -40,36 +41,6 @@ debug.subscribe((value) => {
 settings.subscribe((value) => {
   _debug('settings changed', value)
 })
-
-function derivedDeep<T, U> (store: Readable<T>, fn: (value: T) => U) {
-  let previousValue: string
-
-  return derived<Readable<T>, U>(store, (value: T, set) => {
-    const newValue = fn(value)
-    const stringified = JSON.stringify(newValue)
-
-    if (previousValue !== stringified) {
-      previousValue = stringified
-      set(newValue)
-    }
-  })
-}
-
-function skipFirst<T> (store: Readable<T>) {
-  let first = true
-  return {
-    ...store,
-    subscribe: (run: (value: T) => void) => {
-      return store.subscribe((value) => {
-        if (first) {
-          first = false
-          return
-        }
-        run(value)
-      })
-    }
-  }
-}
 
 const torrentSettings = derivedDeep(settings, ($settings) => ({
   torrentPersist: $settings.torrentPersist,

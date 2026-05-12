@@ -2,6 +2,7 @@ import as from 'anitomyscript'
 import { type ClassValue, clsx } from 'clsx'
 import { readable } from 'simple-store-svelte'
 import { cubicOut } from 'svelte/easing'
+import { derived, type Readable, type Unsubscriber, type Updater } from 'svelte/store'
 import { twMerge } from 'tailwind-merge'
 
 import SUPPORTS from './modules/settings/supports'
@@ -321,7 +322,8 @@ export const safefetch = async <T> (_fetch: typeof fetch, ...args: Parameters<ty
   }
 }
 
-export function arrayEqual <T> (a: T[], b: T[]) {
+export function arrayEqual <T> (a: T, b: T) {
+  if (!Array.isArray(a) || !Array.isArray(b)) return false
   return a.length === b.length && a.every((v, i) => v === b[i])
 }
 
@@ -386,4 +388,61 @@ export function saveFile (data: string | Record<string, unknown>, name: string, 
   a.click()
   URL.revokeObjectURL(a.href)
   navigator.clipboard.writeText(data)
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Stores = Readable<any> | [Readable<any>, ...Array<Readable<any>>] | Array<Readable<any>>
+type StoresValues<T> = T extends Readable<infer U> ? U : { [K in keyof T]: T[K] extends Readable<infer U> ? U : never }
+
+export function derivedArray<S extends Stores, T>(stores: S, fn: (values: StoresValues<S>) => T, initialValue?: T): Readable<T>
+export function derivedArray<S extends Stores, T> (stores: S, fn: (values: StoresValues<S>, set: (value: T) => void, update: (fn: Updater<T>) => void) => Unsubscriber | undefined, initialValue?: T): Readable<T> {
+  let previous = initialValue
+
+  return derived<S, T>(stores, (values, set, update) => {
+    const emit = (next: T) => {
+      if (previous === undefined || !arrayEqual(previous, next)) {
+        previous = next
+        set(next)
+      }
+    }
+
+    const result = fn(values, emit, update) as T
+
+    if (Array.isArray(result)) {
+      emit(result)
+      return
+    }
+
+    return result as (() => void) | undefined
+  }, initialValue)
+}
+
+export function derivedDeep<T, U> (store: Readable<T>, fn: (value: T) => U) {
+  let previousValue: string
+
+  return derived<Readable<T>, U>(store, (value: T, set) => {
+    const newValue = fn(value)
+    const stringified = JSON.stringify(newValue)
+
+    if (previousValue !== stringified) {
+      previousValue = stringified
+      set(newValue)
+    }
+  })
+}
+
+export function skipFirst<T> (store: Readable<T>) {
+  let first = true
+  return {
+    ...store,
+    subscribe: (run: (value: T) => void) => {
+      return store.subscribe((value) => {
+        if (first) {
+          first = false
+          return
+        }
+        run(value)
+      })
+    }
+  }
 }
